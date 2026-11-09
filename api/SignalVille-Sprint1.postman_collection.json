@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "SignalVille Sprint 1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "citoyenEmail",
+      "value": "citoyen@exemple.test"
+    },
+    {
+      "key": "citoyenMotDePasse",
+      "value": "MotDePasseTest123"
+    },
+    {
+      "key": "agentEmail",
+      "value": "agent@exemple.test"
+    },
+    {
+      "key": "agentMotDePasse",
+      "value": ""
+    },
+    {
+      "key": "jetonCitoyen",
+      "value": ""
+    },
+    {
+      "key": "jetonAgent",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Health : attendu 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 : API et base OK\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      }
+    },
+    {
+      "name": "1. Inscription citoyen : attendu 201 (ou 409 si déjà inscrit)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"201 ou 409\", () => pm.expect([201, 409]).to.include(pm.response.code));",
+              "pm.test(\"aucun hachage renvoyé\", () => pm.expect(pm.response.text()).to.not.include(\"motDePasseHache\"));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nom\": \"Citoyen Test\",\n  \"email\": \"{{citoyenEmail}}\",\n  \"motDePasse\": \"{{citoyenMotDePasse}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "2. Connexion citoyen : attendu 200 + jeton",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200\", () => pm.response.to.have.status(200));",
+              "const corps = pm.response.json();",
+              "pm.test(\"jeton présent et rôle citoyen\", () => { pm.expect(corps.jeton).to.be.a(\"string\"); pm.expect(corps.role).to.eql(\"citoyen\"); });",
+              "pm.collectionVariables.set(\"jetonCitoyen\", corps.jeton);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{citoyenEmail}}\",\n  \"motDePasse\": \"{{citoyenMotDePasse}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "3. /admin/ping avec jeton citoyen : attendu 403",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"403 : un citoyen n'accède pas à /admin\", () => pm.response.to.have.status(403));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jetonCitoyen}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/ping",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "ping"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Connexion agent : attendu 200 + jeton",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 (agent créé avec npm run creer-agent, variables agentEmail et agentMotDePasse remplies)\", () => pm.response.to.have.status(200));",
+              "const corps = pm.response.json();",
+              "pm.test(\"rôle agent\", () => pm.expect(corps.role).to.eql(\"agent\"));",
+              "pm.collectionVariables.set(\"jetonAgent\", corps.jeton);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{agentEmail}}\",\n  \"motDePasse\": \"{{agentMotDePasse}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "5. /admin/ping avec jeton agent : attendu 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 : l'agent accède à /admin\", () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jetonAgent}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/admin/ping",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "ping"
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. /admin/ping sans jeton : attendu 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/admin/ping",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "admin",
+            "ping"
+          ]
+        }
+      }
+    },
+    {
+      "name": "7. Connexion avec un mauvais mot de passe : attendu 401",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"401\", () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{citoyenEmail}}\",\n  \"motDePasse\": \"mauvais-mot-de-passe\"\n}"
+        }
+      }
+    }
+  ]
+}

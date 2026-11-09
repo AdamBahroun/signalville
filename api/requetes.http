@@ -1,0 +1,145 @@
+### Exemples pour l'extension REST Client de VS Code. Remplacer les valeurs entre accolades.
+@base = http://localhost:3000
+
+### Santé de l'API
+GET {{base}}/health
+
+### Inscription d'un citoyen
+POST {{base}}/auth/register
+Content-Type: application/json
+
+{ "nom": "Citoyen Test", "email": "citoyen@exemple.test", "motDePasse": "MotDePasseTest123" }
+
+### Connexion citoyen (copier le jeton dans la variable ci-dessous)
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "citoyen@exemple.test", "motDePasse": "MotDePasseTest123" }
+
+@jetonCitoyen = COLLER_LE_JETON_ICI
+
+### Créer un signalement (renvoie nouvelIncident: true ou false selon le regroupement)
+POST {{base}}/reports
+Authorization: Bearer {{jetonCitoyen}}
+Content-Type: application/json
+
+{ "categorie": "nid_de_poule", "description": "Trou profond devant l'école", "lat": 36.4489, "lng": 10.7311 }
+
+### Connexion administrateur
+POST {{base}}/auth/login
+Content-Type: application/json
+
+{ "email": "admin@exemple.test", "motDePasse": "un-mot-de-passe-solide" }
+
+@jetonAdmin = COLLER_LE_JETON_ICI
+
+### Un citoyen sur une route admin : 403
+GET {{base}}/admin/incidents
+Authorization: Bearer {{jetonCitoyen}}
+
+### Liste des incidents ouverts, triée par priorité
+GET {{base}}/admin/incidents?statut=ouverts&page=1&limite=20
+Authorization: Bearer {{jetonAdmin}}
+
+### Détail d'un incident
+GET {{base}}/admin/incidents/{{idIncident}}
+Authorization: Bearer {{jetonAdmin}}
+
+### Changer le statut
+PATCH {{base}}/admin/incidents/{{idIncident}}/status
+Authorization: Bearer {{jetonAdmin}}
+Content-Type: application/json
+
+{ "statut": "pris_en_charge", "motif": "Équipe prévenue" }
+
+### Fusionner un doublon dans un autre incident
+POST {{base}}/admin/incidents/{{idSource}}/fusion
+Authorization: Bearer {{jetonAdmin}}
+Content-Type: application/json
+
+{ "cibleId": "{{idCible}}" }
+
+### Rejeter un signalement et bloquer son auteur
+POST {{base}}/admin/signalements/{{idSignalement}}/rejet
+Authorization: Bearer {{jetonAdmin}}
+Content-Type: application/json
+
+{ "motif": "Faux signalement", "bloquerAuteur": true }
+
+### Utilisateurs bloqués
+GET {{base}}/admin/utilisateurs?bloque=true
+Authorization: Bearer {{jetonAdmin}}
+
+### Bloquer ou débloquer un citoyen
+PATCH {{base}}/admin/utilisateurs/{{idUtilisateur}}/blocage
+Authorization: Bearer {{jetonAdmin}}
+Content-Type: application/json
+
+{ "bloque": false }
+
+### Catégories : lire, puis modifier le rayon et le poids
+GET {{base}}/admin/categories
+Authorization: Bearer {{jetonAdmin}}
+
+###
+PATCH {{base}}/admin/categories/dechets
+Authorization: Bearer {{jetonAdmin}}
+Content-Type: application/json
+
+{ "rayonMetres": 80, "poids": 3 }
+
+### Carte de chaleur et statistiques
+GET {{base}}/admin/heatmap
+Authorization: Bearer {{jetonAdmin}}
+
+###
+GET {{base}}/admin/stats
+Authorization: Bearer {{jetonAdmin}}
+
+### ---------------------------------------------------------------- Sprint 2
+
+### Catégories disponibles (jeton citoyen)
+GET {{base}}/categories
+Authorization: Bearer {{jetonCitoyen}}
+
+### Créer un signalement AVEC photo (multipart). Placer une image photo.jpg à côté de ce fichier.
+POST {{base}}/reports
+Authorization: Bearer {{jetonCitoyen}}
+Content-Type: multipart/form-data; boundary=FrontiereTuniIns
+
+--FrontiereTuniIns
+Content-Disposition: form-data; name="categorie"
+
+nid_de_poule
+--FrontiereTuniIns
+Content-Disposition: form-data; name="description"
+
+Trou profond avec photo
+--FrontiereTuniIns
+Content-Disposition: form-data; name="lat"
+
+36.4489
+--FrontiereTuniIns
+Content-Disposition: form-data; name="lng"
+
+10.7311
+--FrontiereTuniIns
+Content-Disposition: form-data; name="photo"; filename="photo.jpg"
+Content-Type: image/jpeg
+
+< ./photo.jpg
+--FrontiereTuniIns--
+
+### Incidents ouverts proches d'une position (carte mobile), rayon en mètres
+GET {{base}}/incidents?lat=36.4513&lng=10.7357&rayon=2000
+Authorization: Bearer {{jetonCitoyen}}
+
+### Documentation interactive : ouvrir http://localhost:3000/docs dans le navigateur
+
+### Confirmer un incident « moi aussi » (jeton d'un AUTRE citoyen que l'auteur ; 409 si déjà confirmé ou si l'incident est clos)
+POST {{base}}/incidents/{id_incident}/confirm
+Authorization: Bearer {{jetonCitoyen}}
+
+### Mes signalements et le suivi de leur incident
+GET {{base}}/me/reports
+Authorization: Bearer {{jetonCitoyen}}
