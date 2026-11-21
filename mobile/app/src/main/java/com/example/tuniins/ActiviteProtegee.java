@@ -18,6 +18,7 @@ import retrofit2.Response;
 public abstract class ActiviteProtegee extends AppCompatActivity {
     protected SessionManager session;
 
+    // Ouvre la session locale ; sans jeton enregistré, retour à la connexion.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -34,6 +35,7 @@ public abstract class ActiviteProtegee extends AppCompatActivity {
         return true;
     }
 
+    // Retourne à l'écran de connexion en vidant la pile d'écrans.
     private void versConnexion() {
         Intent intent = new Intent(this, AuthentificationActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

@@ -8,9 +8,11 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+// Client Retrofit unique de l'application, avec le jeton de session ajouté à chaque requête.
 public class ApiClient {
     private static ApiService service;
 
+    // Renvoie l'instance partagée de l'API (créée au premier appel).
     public static synchronized ApiService get(Context contexte) {
         if (service == null) {
             final Context app = contexte.getApplicationContext();

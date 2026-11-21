@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// Compte utilisateur : citoyen (application mobile) ou agent (site d'administration).
 const userSchema = new mongoose.Schema(
   {
     nom: { type: String, required: true, trim: true, maxlength: 60 },

@@ -18,6 +18,7 @@ export const definirSurSessionExpiree = (fonction) => {
   surSessionExpiree = fonction;
 };
 
+// Appelle l'API (via le proxy /api) avec un message clair si elle est injoignable.
 async function appeler(chemin, options = {}) {
   try {
     return await fetch(`/api${chemin}`, options);
@@ -26,6 +27,7 @@ async function appeler(chemin, options = {}) {
   }
 }
 
+// Requête authentifiée : jeton de session, JSON, et erreurs transformées en messages.
 async function requete(methode, chemin, corps) {
   const session = lireSession();
   const entetes = { Authorization: `Bearer ${session?.jeton ?? ''}` };
@@ -43,6 +45,7 @@ async function requete(methode, chemin, corps) {
   return donnees;
 }
 
+// Construit la chaîne de requête en ignorant les valeurs vides.
 const parametres = (objet) => {
   const p = new URLSearchParams();
   for (const [cle, valeur] of Object.entries(objet)) {

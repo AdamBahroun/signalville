@@ -19,6 +19,7 @@ app.disable('x-powered-by');
 // upgrade-insecure-requests est retiré de la politique par défaut : l'API est servie en http en local, et certains navigateurs
 // (Safari) tentent alors de charger les fichiers de Swagger UI en https, ce qui échoue. Derrière un vrai HTTPS, le remettre.
 app.use(helmet({ contentSecurityPolicy: { useDefaults: true, directives: { 'upgrade-insecure-requests': null } } }));
+// Lecture du JSON des requêtes, limitée à 10 Ko.
 app.use(express.json({ limit: '10kb' }));
 
 // GET /health : l'API répond et la base est connectée (S1.1)
@@ -53,11 +54,17 @@ app.use(
   })
 );
 
+// Routes publiques d'inscription et de connexion.
 app.use('/auth', authRoutes);
+// Routes réservées à l'administrateur (rôle agent).
 app.use('/admin', adminRoutes);
+// Création des signalements (citoyen).
 app.use('/reports', reportsRoutes);
+// Incidents proches et confirmation « moi aussi » (citoyen).
 app.use('/incidents', incidentsRoutes);
+// Liste des catégories (citoyen).
 app.use('/categories', categoriesRoutes);
+// Suivi des signalements et jeton d'appareil du citoyen connecté.
 app.use('/me', meRoutes);
 
 // Photos des signalements. Helmet bloque par défaut le chargement d'une image par un autre site (CORP same-origin) :
@@ -75,7 +82,9 @@ app.use(
 // Documentation interactive de l'API (Swagger UI) : http://localhost:3000/docs
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(openapi, { customSiteTitle: 'API TuniIns' }));
 
+// Route inconnue : réponse 404 en JSON.
 app.use(introuvable);
+// Gestionnaire d'erreurs final : transforme toute erreur en réponse JSON.
 app.use(gestionErreurs);
 
 module.exports = app;

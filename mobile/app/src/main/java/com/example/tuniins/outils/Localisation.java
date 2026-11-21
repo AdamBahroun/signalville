@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat;
 
 // Position du téléphone avec le service de localisation d'Android (sans dépendance à Google Play Services).
 public final class Localisation {
+    // Reçoit le résultat d'une demande de position, toujours sur le thread principal.
     public interface Ecouteur {
         void surPosition(Location position);
 
@@ -25,6 +26,7 @@ public final class Localisation {
 
     private Localisation() {}
 
+    // Vrai si la permission de localisation (précise ou approximative) est accordée.
     public static boolean permissionAccordee(Context contexte) {
         return ContextCompat.checkSelfPermission(contexte, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 || ContextCompat.checkSelfPermission(contexte, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
@@ -59,6 +61,7 @@ public final class Localisation {
             final Handler delai = new Handler(Looper.getMainLooper());
             final boolean[] termine = {false};
             final LocationListener ecoute = new LocationListener() {
+                // Première position reçue : on arrête l'attente et on la transmet.
                 @Override
                 public void onLocationChanged(Location position) {
                     if (termine[0]) return;
@@ -86,6 +89,7 @@ public final class Localisation {
         }
     }
 
+    // Garde la position la plus récente, en ignorant celles trop anciennes.
     private static Location plusRecente(Location actuelle, Location candidate) {
         if (candidate == null || System.currentTimeMillis() - candidate.getTime() > AGE_MAX_MS) return actuelle;
         return actuelle == null || candidate.getTime() > actuelle.getTime() ? candidate : actuelle;

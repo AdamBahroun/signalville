@@ -1,5 +1,6 @@
 // Outils géographiques purs. Les coordonnées GeoJSON sont toujours [longitude, latitude].
 const RAYON_TERRE_M = 6371008.8;
+// Convertit des degrés en radians.
 const rad = (deg) => (deg * Math.PI) / 180;
 
 // Distance en mètres entre deux points (formule de haversine).
@@ -17,6 +18,7 @@ function centre(points) {
   return [somme[0] / points.length, somme[1] / points.length];
 }
 
+// Vrai si lng et lat sont des nombres finis dans les bornes géographiques.
 const coordonneesValides = (lng, lat) =>
   typeof lng === 'number' && typeof lat === 'number' && Number.isFinite(lng) && Number.isFinite(lat) && lng >= -180 && lng <= 180 && lat >= -90 && lat <= 90;
 

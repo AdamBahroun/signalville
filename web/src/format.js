@@ -19,6 +19,7 @@ export const CENTRE_NABEUL = [36.4513, 10.7357];
 
 export const formaterScore = (n) => Number(n).toFixed(1).replace('.', ',');
 
+// Date ISO en jj/mm/aaaa hh:mm, chaîne vide si invalide.
 export function formaterDate(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';

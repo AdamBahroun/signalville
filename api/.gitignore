@@ -1,4 +1,17 @@
+# Dépendances installées par npm ci
 node_modules/
+
+# Secrets et configuration locale : jamais dans le dépôt (copier .env.example vers .env)
 .env
+.env.*
+!.env.example
+
+# Compte de service Firebase (secret) : à garder hors du dépôt
+firebase-service-account*.json
+*-firebase-adminsdk-*.json
+
+# Photos envoyées par les citoyens : données d'exécution, pas du code
 uploads/
+
+# Journaux
 *.log

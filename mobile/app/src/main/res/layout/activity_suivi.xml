@@ -45,6 +45,24 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <!-- Photo du signalement (S4.5), masquée tant qu'il n'y en a pas -->
+        <ImageView
+            android:id="@+id/suiviPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:layout_marginTop="8dp"
+            android:contentDescription="Photo du signalement"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/suiviPhotoErreur"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Photo indisponible pour le moment (vérifie la connexion)."
+            android:textSize="13sp"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/suiviCompteurs"
             android:layout_width="match_parent"

@@ -1,5 +1,6 @@
 package com.example.tuniins.api;
 
+// Incident ouvert affiché sur la carte, sans score ni auteur.
 public class IncidentProche {
     public String id;
     public String categorie;

@@ -6,7 +6,9 @@ import { CENTRE_NABEUL } from './format.js';
 
 // Couche de chaleur : le plugin leaflet.heat attend un objet L global, on le fournit puis on charge le plugin.
 function CoucheChaleur({ points }) {
+  // Carte Leaflet courante (hook de react-leaflet).
   const carte = useMap();
+  // Charge le plugin de chaleur, pose la couche pondérée et la retire au changement ou au démontage.
   useEffect(() => {
     let annule = false;
     let couche = null;
@@ -28,10 +30,12 @@ function CoucheChaleur({ points }) {
   return null;
 }
 
+// Onglet « Carte de chaleur » : incidents ouverts pondérés par leur nombre de signalements.
 export default function CarteChaleur() {
-  const [points, setPoints] = useState(null);
-  const [erreur, setErreur] = useState('');
+  const [points, setPoints] = useState(null); // points de chaleur, null pendant le chargement
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
 
+  // Charge les points de la carte de chaleur au premier affichage.
   useEffect(() => {
     carteChaleur()
       .then((r) => setPoints(r.points))

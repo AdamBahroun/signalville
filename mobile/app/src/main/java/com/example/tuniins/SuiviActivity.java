@@ -1,19 +1,23 @@
 package com.example.tuniins;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.example.tuniins.api.Changement;
 import com.example.tuniins.api.IncidentSuivi;
 import com.example.tuniins.api.MonSignalement;
+import com.example.tuniins.outils.ChargeurImage;
 import com.example.tuniins.outils.FormatUtil;
 import com.google.gson.Gson;
 
-// S3.6 : suivi d'un signalement. Le détail est passé par l'écran précédent (aucun nouvel appel réseau).
+// S3.6 : suivi d'un signalement (détail passé par l'écran précédent). S4.5 : sa photo, téléchargée à part.
 public class SuiviActivity extends ActiviteProtegee {
     public static final String EXTRA_SIGNALEMENT = "signalement";
 
+    // Affiche le signalement reçu de la liste : statut, compteurs, photo et historique.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +36,7 @@ public class SuiviActivity extends ActiviteProtegee {
         ((TextView) findViewById(R.id.suiviTitre)).setText(s.libelle);
         ((TextView) findViewById(R.id.suiviDate)).setText("Signalé le " + FormatUtil.date(s.date));
         ((TextView) findViewById(R.id.suiviDescription)).setText(s.description);
+        afficherPhoto(s.photoUrl);
 
         TextView statut = findViewById(R.id.suiviStatut);
         TextView rejet = findViewById(R.id.suiviRejet);
@@ -56,6 +61,30 @@ public class SuiviActivity extends ActiviteProtegee {
         afficherHistorique(s.incident);
     }
 
+    // Photo jointe au signalement (facultative) : un échec réseau n'empêche pas d'afficher le reste de l'écran.
+    private void afficherPhoto(String photoUrl) {
+        if (photoUrl == null || photoUrl.isEmpty()) return;
+        final ImageView vue = findViewById(R.id.suiviPhoto);
+        final TextView erreur = findViewById(R.id.suiviPhotoErreur);
+        vue.setVisibility(View.VISIBLE);
+        ChargeurImage.charger(photoUrl, new ChargeurImage.Ecouteur() {
+            // Photo téléchargée : on l'affiche.
+            @Override
+            public void surImage(Bitmap image) {
+                if (isFinishing()) return;
+                vue.setImageBitmap(image);
+            }
+
+            // Photo impossible à charger : message à la place de l'image.
+            @Override
+            public void surEchec() {
+                if (isFinishing()) return;
+                vue.setVisibility(View.GONE);
+                erreur.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
     // Une ligne par changement de statut : le statut et la date en gras, le motif en dessous.
     private void afficherHistorique(IncidentSuivi incident) {
         LinearLayout conteneur = findViewById(R.id.conteneurHistorique);
@@ -78,6 +107,7 @@ public class SuiviActivity extends ActiviteProtegee {
         }
     }
 
+    // Convertit des dp en pixels selon la densité de l'écran.
     private int dp(int valeur) {
         return Math.round(valeur * getResources().getDisplayMetrics().density);
     }

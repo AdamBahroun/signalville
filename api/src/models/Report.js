@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { appliquerToJSON } = require('./outils');
 
+// Signalement d'un citoyen, rattaché à un seul incident (RG1).
 const reportSchema = new mongoose.Schema({
   utilisateur: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   incident: { type: mongoose.Schema.Types.ObjectId, ref: 'Incident', required: true, index: true }, // RG1 : un seul incident

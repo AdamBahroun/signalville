@@ -20,6 +20,7 @@ public final class PhotoUtil {
 
     private PhotoUtil() {}
 
+    // Dossier cache/photos de l'application, créé au besoin.
     public static File dossier(Context contexte) {
         File dossier = new File(contexte.getCacheDir(), "photos");
         //noinspection ResultOfMethodCallIgnored
@@ -73,6 +74,7 @@ public final class PhotoUtil {
         return sortie;
     }
 
+    // Lit l'orientation EXIF de la photo pour la redresser.
     private static int rotation(Context contexte, Uri source) {
         try (InputStream in = contexte.getContentResolver().openInputStream(source)) {
             if (in == null) return 0;

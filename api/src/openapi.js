@@ -3,14 +3,16 @@
 const erreur = { description: 'Erreur', content: { 'application/json': { schema: { $ref: '#/components/schemas/Erreur' } } } };
 const secu = [{ jeton: [] }];
 const idParam = { name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: '^[0-9a-f]{24}$' }, description: 'Identifiant MongoDB (24 caractères hexadécimaux)' };
+// Fabrique les réponses d'une route : la réponse de succès plus les codes d'erreur listés.
 const reponses = (ok, ...codes) => ({ ...ok, ...Object.fromEntries(codes.map((c) => [String(c), erreur])) });
+// Enveloppe un schéma dans un contenu application/json.
 const json = (schema) => ({ content: { 'application/json': { schema } } });
 
 module.exports = {
   openapi: '3.0.3',
   info: {
     title: 'API TuniIns',
-    version: '0.3.0',
+    version: '0.4.0',
     description:
       "Signalement citoyen d'incidents avec regroupement automatique des doublons et score de priorité.\n\n" +
       'Authentification : `POST /auth/login` renvoie un jeton JWT. Bouton **Authorize** ci-dessus, puis coller le jeton (sans le mot Bearer).\n\n' +
@@ -210,20 +212,43 @@ module.exports = {
     '/incidents/{id}/confirm': {
       post: {
         tags: ['Citoyen'],
-        summary: 'Confirmer un incident : « moi aussi » (RG5)',
+        summary: 'Confirmer un incident : « moi aussi » (RG5, RG10)',
         description:
           'Une seule confirmation par utilisateur et par incident (409 sinon). Refusée (409) si l\'incident est résolu ou rejeté, ou si l\'utilisateur est déjà l\'auteur d\'un signalement de cet incident. ' +
+          'RG10 : le corps doit contenir la position du téléphone (400 sinon) ; refusée (403) si elle est à plus de 1 000 m de l\'incident (rayon configurable, variable CONFIRMATION_RAYON_M), ' +
+          'et limitée par jour (429, variable LIMITE_CONFIRMATIONS_PAR_JOUR). La position est déclarée par le client : elle n\'est pas vérifiable côté serveur. ' +
           'La confirmation compte comme une personne de plus dans le score, sans créer de signalement.',
         security: secu,
         parameters: [idParam],
+        requestBody: {
+          required: true,
+          ...json({
+            type: 'object',
+            required: ['lat', 'lng'],
+            properties: { lat: { type: 'number', minimum: -90, maximum: 90, description: 'Latitude du téléphone' }, lng: { type: 'number', minimum: -180, maximum: 180, description: 'Longitude du téléphone' } },
+          }),
+        },
         responses: reponses(
           { 201: { description: 'Confirmation enregistrée', ...json({ type: 'object', properties: { incidentId: { type: 'string' }, nbSignalements: { type: 'integer' }, nbPersonnes: { type: 'integer' }, dejaConfirme: { type: 'boolean' } } }) } },
           400,
           401,
           403,
           404,
-          409
+          409,
+          429
         ),
+      },
+    },
+    '/me/device-token': {
+      post: {
+        tags: ['Citoyen'],
+        summary: 'Enregistrer le jeton Firebase de l\'appareil (notifications)',
+        description:
+          'Appelée par l\'application après la connexion. Un jeton appartient à un seul utilisateur (réattribué si un autre compte se connecte sur le même appareil) ; ' +
+          '5 appareils conservés par utilisateur. Sans configuration Firebase côté serveur, la route fonctionne mais aucune notification n\'est envoyée.',
+        security: secu,
+        requestBody: { required: true, ...json({ type: 'object', required: ['jetonAppareil'], properties: { jetonAppareil: { type: 'string', minLength: 20, maxLength: 4096 } } }) },
+        responses: reponses({ 200: { description: 'Jeton enregistré', ...json({ type: 'object', properties: { enregistre: { type: 'boolean' } } }) } }, 400, 401, 403),
       },
     },
     '/me/reports': {

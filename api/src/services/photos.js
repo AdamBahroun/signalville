@@ -45,6 +45,7 @@ async function enregistrerPhoto(photo) {
   return `/uploads/${nom}`;
 }
 
+// Supprime un fichier photo du disque (sans erreur s'il n'existe pas).
 async function supprimerPhoto(url) {
   if (!url) return;
   await fs.promises.rm(path.join(DOSSIER, path.basename(url)), { force: true });

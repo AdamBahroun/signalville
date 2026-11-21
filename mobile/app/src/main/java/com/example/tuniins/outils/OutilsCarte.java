@@ -1,6 +1,9 @@
 package com.example.tuniins.outils;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.preference.PreferenceManager;
 import java.io.File;
 import org.osmdroid.config.Configuration;
@@ -9,6 +12,7 @@ import org.osmdroid.tileprovider.tilesource.XYTileSource;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 
+// Réglages communs des cartes osmdroid : centre de Nabeul, tuiles, zone de la commune.
 public final class OutilsCarte {
     // Centre de la commune par défaut (Nabeul). Le contrôle de zone (RG9) reste fait par l'API.
     public static final double CENTRE_LAT = 36.4513;
@@ -38,7 +42,7 @@ public final class OutilsCarte {
         Configuration.getInstance().load(appContexte, PreferenceManager.getDefaultSharedPreferences(appContexte));
 
         // 2. Définir un User-Agent valide SANS "com.example" (OpenStreetMap bloque automatiquement les requêtes contenant "com.example")
-        String userAgent = "SignalementCitoyenTuniIns/1.0 (contact@signalville.tn)";
+        String userAgent = "TuniIns/1.0 (projet étudiant, ISET Nabeul)";
         Configuration.getInstance().setUserAgentValue(userAgent);
         Configuration.getInstance().getAdditionalHttpRequestProperties().put("User-Agent", userAgent);
 
@@ -55,6 +59,7 @@ public final class OutilsCarte {
         Configuration.getInstance().save(appContexte, PreferenceManager.getDefaultSharedPreferences(appContexte));
     }
 
+    // Règle la source de tuiles, le zoom et le centre d'une carte.
     public static void configurer(MapView carte, double lat, double lng, double zoom) {
         carte.setTileSource(TUILES_OSM_FR);
         carte.setMultiTouchControls(true);
@@ -62,12 +67,25 @@ public final class OutilsCarte {
         carte.getController().setCenter(new GeoPoint(lat, lng));
     }
 
+    // Repère rond de la couleur du statut (orange nouveau, bleu pris en charge), à poser avec ANCHOR_CENTER.
+    public static Drawable pastille(Context contexte, int couleur) {
+        int taille = Math.round(26 * contexte.getResources().getDisplayMetrics().density);
+        GradientDrawable rond = new GradientDrawable();
+        rond.setShape(GradientDrawable.OVAL);
+        rond.setColor(couleur);
+        rond.setStroke(Math.max(2, taille / 10), Color.WHITE);
+        rond.setSize(taille, taille);
+        return rond;
+    }
+
+    // Vrai si la position est dans le rayon de la commune autour de Nabeul.
     public static boolean dansLaCommune(double lat, double lng) {
         float[] resultat = new float[1];
         android.location.Location.distanceBetween(CENTRE_LAT, CENTRE_LNG, lat, lng, resultat);
         return resultat[0] <= RAYON_COMMUNE_M;
     }
 
+    // Supprime récursivement le contenu d'un dossier (cache de tuiles).
     private static void supprimerDossier(File dossier) {
         if (dossier != null && dossier.exists() && dossier.isDirectory()) {
             File[] fichiers = dossier.listFiles();

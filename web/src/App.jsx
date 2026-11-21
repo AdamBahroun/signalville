@@ -16,11 +16,13 @@ const ONGLETS = [
   { cle: 'parametres', libelle: 'Paramètres' },
 ];
 
+// Racine du site : connexion, onglets de l'administration et détail d'un incident.
 export default function App() {
-  const [session, setSession] = useState(lireSession);
-  const [onglet, setOnglet] = useState('incidents');
+  const [session, setSession] = useState(lireSession); // session de l'administrateur (jeton, nom), null si déconnecté
+  const [onglet, setOnglet] = useState('incidents'); // onglet affiché
   const [incidentOuvert, setIncidentOuvert] = useState(null); // identifiant de l'incident affiché en détail
 
+  // Ferme la session et revient à l'écran de connexion.
   const deconnecter = useCallback(() => {
     effacerSession();
     setSession(null);
@@ -28,6 +30,7 @@ export default function App() {
     setOnglet('incidents');
   }, []);
 
+  // Enregistre la session après une connexion réussie.
   const ouvrirSession = (s) => {
     ecrireSession(s);
     setSession(s);
@@ -50,6 +53,7 @@ export default function App() {
 
   if (!session) return <Login onConnecte={ouvrirSession} />;
 
+  // Change d'onglet et ferme le détail d'incident ouvert.
   const choisirOnglet = (cle) => {
     setOnglet(cle);
     setIncidentOuvert(null);

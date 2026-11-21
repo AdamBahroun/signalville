@@ -8,6 +8,7 @@ const bcrypt = require('bcryptjs');
 const config = require('../src/config');
 const User = require('../src/models/User');
 
+// Crée ou promeut un compte agent à partir des arguments de la ligne de commande.
 async function main() {
   const { values } = parseArgs({
     options: { nom: { type: 'string' }, email: { type: 'string' }, motdepasse: { type: 'string' } },

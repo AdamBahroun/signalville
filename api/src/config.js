@@ -22,6 +22,13 @@ const config = {
   },
   // RG6 : nombre maximal de signalements par utilisateur sur 24 heures glissantes.
   limiteSignalementsParJour: Number(process.env.LIMITE_SIGNALEMENTS_PAR_JOUR) || 10,
+  // RG10 : « moi aussi » seulement près de l'incident. Rayon et limite quotidienne configurables (valeurs initiales à calibrer).
+  confirmation: {
+    rayonMetres: Number(process.env.CONFIRMATION_RAYON_M) || 1000, // distance maximale téléphone-incident
+    limiteParJour: Number(process.env.LIMITE_CONFIRMATIONS_PAR_JOUR) || 20, // fenêtre glissante de 24 heures
+  },
+  // S4.1 : chemin du fichier JSON du compte de service Firebase. Vide : notifications désactivées (jamais lu en test).
+  firebaseCheminCompte: enTest ? '' : process.env.FIREBASE_SERVICE_ACCOUNT_PATH || '',
 
   // Appelée au démarrage de l'API : on refuse de démarrer avec un secret JWT faible ou absent.
   verifier() {

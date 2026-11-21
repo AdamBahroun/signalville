@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react';
 import { listerUtilisateurs, bloquerUtilisateur } from './api.js';
 import { formaterDate } from './format.js';
 
+// Onglet « Utilisateurs » : recherche, blocage et déblocage des citoyens (F14).
 export default function Utilisateurs() {
-  const [recherche, setRecherche] = useState('');
-  const [rechercheAppliquee, setRechercheAppliquee] = useState('');
-  const [filtre, setFiltre] = useState('');
-  const [page, setPage] = useState(1);
-  const [resultat, setResultat] = useState(null);
-  const [erreur, setErreur] = useState('');
-  const [rechargement, setRechargement] = useState(0);
+  const [recherche, setRecherche] = useState(''); // texte de recherche en cours de saisie
+  const [rechercheAppliquee, setRechercheAppliquee] = useState(''); // recherche réellement appliquée
+  const [filtre, setFiltre] = useState(''); // filtre bloqué ou non
+  const [page, setPage] = useState(1); // page courante
+  const [resultat, setResultat] = useState(null); // page de résultats, null pendant le chargement
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
+  const [rechargement, setRechargement] = useState(0); // compteur qui force le rechargement de la liste
 
+  // Recharge la liste à chaque changement de recherche, de filtre, de page ou après une action.
   useEffect(() => {
     let annule = false;
     listerUtilisateurs({ q: rechercheAppliquee, bloque: filtre, page })
@@ -27,6 +29,7 @@ export default function Utilisateurs() {
     };
   }, [rechercheAppliquee, filtre, page, rechargement]);
 
+  // Bloque ou débloque un citoyen après confirmation.
   async function basculer(u) {
     const action = u.bloque ? 'débloquer' : 'bloquer';
     if (!window.confirm(`Voulez-vous ${action} ${u.nom} (${u.email}) ?`)) return;

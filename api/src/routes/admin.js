@@ -26,10 +26,13 @@ const router = express.Router();
 // Toutes les routes /admin exigent : un jeton valide ET le rôle "agent" (l'administrateur du site web).
 router.use(authentifier, exigerRole('agent'));
 
+// Échappe les caractères spéciaux d'un texte avant de l'utiliser dans une recherche par expression régulière.
 const echapperRegex = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Refuse (400) un identifiant qui n'est pas un ObjectId MongoDB valide.
 const verifierId = (id) => {
   if (!estIdObjet(id)) throw new ErreurMetier(400, 'Identifiant invalide.');
 };
+// Réponse 400 uniforme pour une validation de données qui échoue.
 const erreurValidation = (res, details) => res.status(400).json({ erreur: 'Données invalides.', details });
 
 // GET /admin/ping : permet au site web de vérifier le droit d'accès (200 agent, 403 citoyen)
@@ -171,10 +174,12 @@ router.patch('/utilisateurs/:id/blocage', async (req, res) => {
 
 // ---------------------------------------------------------------- Catégories (rayon et poids paramétrables, RG2 et RG4)
 
+// GET /admin/categories : liste des catégories avec leur rayon et leur poids.
 router.get('/categories', async (_req, res) => {
   res.json({ categories: await Category.find().sort({ nom: 1 }) });
 });
 
+// PATCH /admin/categories/:nom : modifie le rayon (RG2) ou le poids (RG4) d'une catégorie.
 router.patch('/categories/:nom', async (req, res) => {
   const { details, valeurs } = validerCategorie(req.body);
   if (details) return erreurValidation(res, details);

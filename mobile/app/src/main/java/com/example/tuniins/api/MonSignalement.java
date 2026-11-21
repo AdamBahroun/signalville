@@ -1,5 +1,6 @@
 package com.example.tuniins.api;
 
+// Un de mes signalements, avec son incident, sa photo et l'historique.
 public class MonSignalement {
     public String id;
     public String categorie;

@@ -5,6 +5,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // et provoquer une injection d'opérateur MongoDB.
 const chaine = (v) => (typeof v === 'string' ? v : null);
 
+// Valide le corps de POST /auth/register (nom, email, mot de passe).
 function validerInscription(body) {
   const b = body && typeof body === 'object' ? body : {};
   const nom = chaine(b.nom)?.trim() ?? '';
@@ -22,6 +23,7 @@ function validerInscription(body) {
   return { valeurs: { nom, email, motDePasse } };
 }
 
+// Valide le corps de POST /auth/login (email et mot de passe en chaînes).
 function validerConnexion(body) {
   const b = body && typeof body === 'object' ? body : {};
   const email = chaine(b.email)?.trim().toLowerCase() ?? '';
@@ -36,7 +38,9 @@ const { coordonneesValides } = require('./services/geo');
 const OBJECT_ID_RE = /^[0-9a-f]{24}$/i;
 // mongoose.isValidObjectId accepte aussi certaines chaînes de 12 caractères : on exige ici 24 caractères hexadécimaux.
 const estIdObjet = (v) => typeof v === 'string' && OBJECT_ID_RE.test(v);
+// Renvoie le corps s'il est un objet simple, sinon un objet vide.
 const objet = (body) => (body && typeof body === 'object' && !Array.isArray(body) ? body : {});
+// Vrai si v est un entier compris entre min et max.
 const entierEntre = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
 
 // Les paramètres d'URL arrivent en chaînes : on les convertit en entier de façon stricte.
@@ -48,6 +52,7 @@ function entierDepuisTexte(v, defaut, min, max) {
   return n >= min && n <= max ? { valeur: n } : { erreur: true };
 }
 
+// Valide les filtres de GET /admin/incidents (statut, catégorie, page, limite).
 function validerFiltresIncidents(query) {
   const q = objet(query);
   const details = {};
@@ -63,6 +68,7 @@ function validerFiltresIncidents(query) {
   return { valeurs: { statut, categorie, page: page.valeur, limite: limite.valeur } };
 }
 
+// Valide le corps de PATCH /admin/incidents/:id/status (statut et motif).
 function validerChangementStatut(body) {
   const b = objet(body);
   const statut = chaine(b.statut);
@@ -74,6 +80,7 @@ function validerChangementStatut(body) {
   return { valeurs: { statut, motif } };
 }
 
+// Valide le corps du rejet d'un signalement (motif, blocage de l'auteur).
 function validerRejet(body) {
   const b = objet(body);
   const motif = chaine(b.motif)?.trim() ?? '';
@@ -84,6 +91,7 @@ function validerRejet(body) {
   return { valeurs: { motif, bloquerAuteur: b.bloquerAuteur === true } };
 }
 
+// Valide la modification d'une catégorie (rayon RG2, poids RG4).
 function validerCategorie(body) {
   const b = objet(body);
   const details = {};
@@ -101,18 +109,21 @@ function validerCategorie(body) {
   return { valeurs };
 }
 
+// Valide le corps du blocage d'un utilisateur (booléen).
 function validerBlocage(body) {
   const b = objet(body);
   if (typeof b.bloque !== 'boolean') return { details: { bloque: 'Booléen attendu.' } };
   return { valeurs: { bloque: b.bloque } };
 }
 
+// Valide le corps de la fusion (identifiant de l'incident cible).
 function validerFusion(body) {
   const b = objet(body);
   if (!estIdObjet(b.cibleId)) return { details: { cibleId: "Identifiant de l'incident cible invalide." } };
   return { valeurs: { cibleId: b.cibleId } };
 }
 
+// Valide les filtres de GET /admin/utilisateurs (blocage, recherche, page).
 function validerFiltresUtilisateurs(query) {
   const q = objet(query);
   const details = {};
@@ -130,7 +141,9 @@ function validerFiltresUtilisateurs(query) {
 
 // Dans un envoi multipart (signalement avec photo), tous les champs arrivent en texte : on convertit lat et lng, rien d'autre.
 const NOMBRE_RE = /^-?\d{1,3}(\.\d{1,12})?$/;
+// Convertit un texte numérique strict en nombre, sinon renvoie la valeur inchangée.
 const nombreDepuisTexte = (v) => (typeof v === 'string' && NOMBRE_RE.test(v.trim()) ? Number(v) : v);
+// Convertit lat et lng d'un envoi multipart (texte) en nombres.
 function convertirChampsMultipart(body) {
   const b = objet(body);
   return { ...b, lat: nombreDepuisTexte(b.lat), lng: nombreDepuisTexte(b.lng) };
@@ -151,6 +164,7 @@ function validerProximite(query) {
   return { valeurs: { lat, lng, rayon: rayon.valeur, categorie } };
 }
 
+// Valide le corps de POST /reports (catégorie, description, position).
 function validerSignalement(body) {
   const b = objet(body);
   const categorie = chaine(b.categorie)?.trim() ?? '';
@@ -161,6 +175,22 @@ function validerSignalement(body) {
   if (!coordonneesValides(b.lng, b.lat)) details.position = 'Position invalide : lat et lng doivent être des nombres.';
   if (Object.keys(details).length > 0) return { details };
   return { valeurs: { categorie, description, lat: b.lat, lng: b.lng } };
+}
+
+// RG10 : la requête « moi aussi » porte la position du téléphone (lat et lng numériques, dans les bornes).
+function validerConfirmation(body) {
+  const b = objet(body);
+  if (!coordonneesValides(b.lng, b.lat)) {
+    return { details: { position: 'Position du téléphone obligatoire : lat et lng doivent être des nombres valides (latitude de -90 à 90, longitude de -180 à 180).' } };
+  }
+  return { valeurs: { lat: b.lat, lng: b.lng } };
+}
+
+// S4.1 : jeton d'appareil Firebase envoyé par l'application (simple chaîne de longueur raisonnable).
+function validerJetonAppareil(body) {
+  const jeton = chaine(objet(body).jetonAppareil)?.trim() ?? '';
+  if (jeton.length < 20 || jeton.length > 4096) return { details: { jetonAppareil: "Jeton d'appareil invalide (20 à 4096 caractères)." } };
+  return { valeurs: { jetonAppareil: jeton } };
 }
 
 module.exports = {
@@ -176,5 +206,7 @@ module.exports = {
   validerFiltresUtilisateurs,
   validerSignalement,
   validerProximite,
+  validerConfirmation,
+  validerJetonAppareil,
   convertirChampsMultipart,
 };

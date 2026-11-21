@@ -4,3 +4,5 @@ uploads/
 *.log
 .idea/
 .vscode/
+
+secrets/

@@ -1,5 +1,6 @@
 package com.example.tuniins.api;
 
+// Catégorie d'incident : nom technique et libellé affiché.
 public class Categorie {
     public String nom;
     public String libelle;

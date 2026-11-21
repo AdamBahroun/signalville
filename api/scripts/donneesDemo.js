@@ -35,14 +35,18 @@ function mulberry32(graine) {
   };
 }
 const alea = mulberry32(2026);
+// Nombre décimal pseudo-aléatoire entre min et max.
 const entre = (min, max) => min + alea() * (max - min);
+// Entier pseudo-aléatoire entre min et max inclus.
 const entier = (min, max) => Math.floor(entre(min, max + 1));
+// Élément pseudo-aléatoire d'une liste.
 const choisir = (liste) => liste[Math.floor(alea() * liste.length)];
 
 // Décale un point de dx mètres vers l'est et dy mètres vers le nord.
 function decaler([lng, lat], dx, dy) {
   return [lng + dx / (111320 * Math.cos((lat * Math.PI) / 180)), lat + dy / 111320];
 }
+// Point pseudo-aléatoire dans un disque autour d'un centre.
 function pointDansDisque(centre, rayon) {
   const angle = entre(0, 2 * Math.PI);
   const r = rayon * Math.sqrt(alea());
@@ -68,6 +72,7 @@ const PLAN = [
   { categorie: 'autre', foyers: 3, min: 1, max: 4 },
 ];
 
+// Génère les signalements de démonstration en passant par le vrai regroupement.
 async function main() {
   const { values } = parseArgs({ options: { reset: { type: 'boolean', default: false } } });
   await mongoose.connect(config.mongoUri, { serverSelectionTimeoutMS: 5000 });
@@ -161,6 +166,7 @@ async function main() {
     const ouverts = await Incident.find({ statut: 'nouveau' });
     for (const inc of ouverts) {
       const tirage = alea();
+      // Date située h heures après le premier signalement, sans dépasser maintenant.
       const apres = (h) => new Date(Math.min(inc.premierSignalement.getTime() + h * 3600 * 1000, Date.now()));
       if (tirage < 0.2) {
         await changerStatut({ incidentId: inc._id, vers: 'pris_en_charge', motif: 'Équipe prévenue', agentId: agent._id, date: apres(entre(2, 48)) });

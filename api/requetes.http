@@ -136,9 +136,20 @@ Authorization: Bearer {{jetonCitoyen}}
 
 ### Documentation interactive : ouvrir http://localhost:3000/docs dans le navigateur
 
-### Confirmer un incident « moi aussi » (jeton d'un AUTRE citoyen que l'auteur ; 409 si déjà confirmé ou si l'incident est clos)
+### Confirmer un incident « moi aussi » (jeton d'un AUTRE citoyen que l'auteur)
+### RG10 : le corps donne la position du téléphone ; 403 si elle est à plus de 1 000 m, 429 au-delà de la limite quotidienne, 409 si déjà confirmé ou clos
 POST {{base}}/incidents/{id_incident}/confirm
 Authorization: Bearer {{jetonCitoyen}}
+Content-Type: application/json
+
+{ "lat": 36.4513, "lng": 10.7357 }
+
+### Enregistrer le jeton Firebase de l'appareil (notifications, facultatif)
+POST {{base}}/me/device-token
+Authorization: Bearer {{jetonCitoyen}}
+Content-Type: application/json
+
+{ "jetonAppareil": "<jeton fourni par Firebase, 20 caractères minimum>" }
 
 ### Mes signalements et le suivi de leur incident
 GET {{base}}/me/reports

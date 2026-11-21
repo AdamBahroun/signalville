@@ -23,6 +23,7 @@ public class ChoixPositionActivity extends ActiviteProtegee {
     private Button boutonValider;
     private GeoPoint choix;
 
+    // Prépare la carte où le citoyen pose le point de l'incident à la main.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,12 +50,14 @@ public class ChoixPositionActivity extends ActiviteProtegee {
 
         // Un toucher ou un appui long sur la carte pose le point.
         carte.getOverlays().add(0, new MapEventsOverlay(new MapEventsReceiver() {
+            // Un toucher sur la carte pose le point.
             @Override
             public boolean singleTapConfirmedHelper(GeoPoint point) {
                 poser(point);
                 return true;
             }
 
+            // Un appui long pose aussi le point.
             @Override
             public boolean longPressHelper(GeoPoint point) {
                 poser(point);
@@ -73,6 +76,7 @@ public class ChoixPositionActivity extends ActiviteProtegee {
         });
     }
 
+    // Place le repère sur la carte, affiche les coordonnées et active le bouton de validation.
     private void poser(GeoPoint point) {
         choix = point;
         if (repere == null) {
@@ -93,6 +97,7 @@ public class ChoixPositionActivity extends ActiviteProtegee {
         if (carte != null) carte.onResume();
     }
 
+    // Met la carte en pause quand l'écran passe en arrière-plan.
     @Override
     protected void onPause() {
         super.onPause();

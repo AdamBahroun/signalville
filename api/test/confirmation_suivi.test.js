@@ -66,7 +66,7 @@ test('moi aussi : une confirmation est enregistrée et compte comme une personne
   const [a, b] = [await creerCompte('Amel'), await creerCompte('Bilel')];
   const { donnees: s } = await signaler(a);
 
-  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b });
+  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL });
   assert.equal(r.statut, 201);
   assert.equal(r.donnees.nbSignalements, 1, 'une confirmation ne crée pas de signalement');
   assert.equal(r.donnees.nbPersonnes, 2);
@@ -80,7 +80,7 @@ test('moi aussi : le score de l\'administrateur augmente (poids 3 du nid-de-poul
   const [a, b] = [await creerCompte('Amel'), await creerCompte('Bilel')];
   const admin = await creerCompte('Admin', 'agent');
   const { donnees: s } = await signaler(a);
-  await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b });
+  await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL });
 
   const r = await appeler('GET', '/admin/incidents', { jeton: admin });
   assert.equal(r.donnees.incidents[0].nbUtilisateurs, 2);
@@ -90,9 +90,9 @@ test('moi aussi : le score de l\'administrateur augmente (poids 3 du nid-de-poul
 test('RG5 : une deuxième confirmation du même utilisateur est refusée (409) et ne change rien', async () => {
   const [a, b] = [await creerCompte('Amel'), await creerCompte('Bilel')];
   const { donnees: s } = await signaler(a);
-  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b })).statut, 201);
+  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL })).statut, 201);
 
-  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b });
+  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL });
   assert.equal(r.statut, 409);
   assert.match(r.donnees.erreur, /déjà confirmé/);
   assert.equal(await Confirmation.countDocuments({ incident: s.incidentId }), 1);
@@ -102,7 +102,7 @@ test('RG5 : une deuxième confirmation du même utilisateur est refusée (409) e
 test('RG5 : deux confirmations simultanées du même utilisateur donnent une seule confirmation', async () => {
   const [a, b] = [await creerCompte('Amel'), await creerCompte('Bilel')];
   const { donnees: s } = await signaler(a);
-  const reponses = await Promise.all([1, 2, 3].map(() => appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b })));
+  const reponses = await Promise.all([1, 2, 3].map(() => appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL })));
   assert.deepEqual(reponses.map((r) => r.statut).sort(), [201, 409, 409]);
   assert.equal(await Confirmation.countDocuments({ incident: s.incidentId }), 1);
 });
@@ -110,7 +110,7 @@ test('RG5 : deux confirmations simultanées du même utilisateur donnent une seu
 test('l\'auteur d\'un signalement ne peut pas confirmer son propre incident', async () => {
   const a = await creerCompte('Amel');
   const { donnees: s } = await signaler(a);
-  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: a });
+  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: a, corps: NABEUL });
   assert.equal(r.statut, 409);
   assert.match(r.donnees.erreur, /déjà signalé/);
 });
@@ -122,7 +122,7 @@ test('RG3 : un incident résolu ou rejeté ne se confirme plus', async () => {
   await appeler('PATCH', `/admin/incidents/${s.incidentId}/status`, { jeton: admin, corps: { statut: 'pris_en_charge', motif: 'Équipe envoyée' } });
   await appeler('PATCH', `/admin/incidents/${s.incidentId}/status`, { jeton: admin, corps: { statut: 'resolu', motif: 'Réparé' } });
 
-  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b });
+  const r = await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL });
   assert.equal(r.statut, 409);
   assert.match(r.donnees.erreur, /plus ouvert/);
 });
@@ -133,22 +133,22 @@ test('moi aussi : accès refusé sans jeton (401), à l\'administrateur (403) ; 
   const { donnees: s } = await signaler(a);
 
   assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`)).statut, 401);
-  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: admin })).statut, 403);
-  assert.equal((await appeler('POST', '/incidents/pas-un-id/confirm', { jeton: b })).statut, 400);
-  assert.equal((await appeler('POST', `/incidents/${'a'.repeat(24)}/confirm`, { jeton: b })).statut, 404);
+  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: admin, corps: NABEUL })).statut, 403);
+  assert.equal((await appeler('POST', '/incidents/pas-un-id/confirm', { jeton: b, corps: NABEUL })).statut, 400);
+  assert.equal((await appeler('POST', `/incidents/${'a'.repeat(24)}/confirm`, { jeton: b, corps: NABEUL })).statut, 404);
 });
 
 test('un utilisateur bloqué ne peut plus confirmer', async () => {
   const [a, b] = [await creerCompte('Amel'), await creerCompte('Bilel')];
   const { donnees: s } = await signaler(a);
   await User.updateOne({ email: 'bilel@exemple.test' }, { bloque: true });
-  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b })).statut, 401);
+  assert.equal((await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL })).statut, 401);
 });
 
 test('GET /incidents : monSignalement et dejaConfirme sont propres à l\'utilisateur connecté, sans score ni historique', async () => {
   const [a, b, c] = [await creerCompte('Amel'), await creerCompte('Bilel'), await creerCompte('Chaima')];
   const { donnees: s } = await signaler(a);
-  await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b });
+  await appeler('POST', `/incidents/${s.incidentId}/confirm`, { jeton: b, corps: NABEUL });
   const chemin = `/incidents?lat=${NABEUL.lat}&lng=${NABEUL.lng}`;
 
   const vueA = (await appeler('GET', chemin, { jeton: a })).donnees.incidents[0];
@@ -220,4 +220,5 @@ test('Swagger : les nouvelles routes figurent dans la documentation', () => {
   const openapi = require('../src/openapi');
   assert.ok(openapi.paths['/incidents/{id}/confirm'].post);
   assert.ok(openapi.paths['/me/reports'].get);
+  assert.ok(openapi.paths['/me/device-token'].post);
 });

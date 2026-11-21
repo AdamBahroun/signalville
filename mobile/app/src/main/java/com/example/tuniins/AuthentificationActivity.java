@@ -17,12 +17,14 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Écran de connexion du citoyen (point d'entrée de l'application).
 public class AuthentificationActivity extends AppCompatActivity {
     private EditText champEmail, champMotDePasse;
     private Button boutonConnexion;
     private ProgressBar progression;
     private TextView texteErreur;
 
+    // Redirige vers l'accueil si une session existe, sinon prépare le formulaire de connexion.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +46,7 @@ public class AuthentificationActivity extends AppCompatActivity {
         findViewById(R.id.texteInscription).setOnClickListener(v -> startActivity(new Intent(this, InscriptionActivity.class)));
     }
 
+    // Vérifie les champs puis envoie email et mot de passe à l'API.
     private void connecter() {
         String email = champEmail.getText().toString().trim();
         String motDePasse = champMotDePasse.getText().toString();
@@ -53,6 +56,7 @@ public class AuthentificationActivity extends AppCompatActivity {
         }
         enCours(true);
         ApiClient.get(this).connecter(new LoginRequest(email, motDePasse)).enqueue(new Callback<LoginResponse>() {
+            // Connexion acceptée : on garde le jeton et on ouvre l'accueil ; sinon on affiche le message de l'API.
             @Override
             public void onResponse(Call<LoginResponse> appel, Response<LoginResponse> reponse) {
                 if (isFinishing()) return;
@@ -71,26 +75,30 @@ public class AuthentificationActivity extends AppCompatActivity {
                 }
             }
 
+            // Réseau indisponible pendant la connexion.
             @Override
             public void onFailure(Call<LoginResponse> appel, Throwable erreur) {
                 if (isFinishing()) return;
                 enCours(false);
-                afficherErreur("Impossible de joindre le serveur. Vérifie la connexion et l'adresse de l'API.");
+                afficherErreur(ErreurUtil.reseau(erreur));
             }
         });
     }
 
+    // Affiche ou masque la progression et verrouille le bouton.
     private void enCours(boolean actif) {
         progression.setVisibility(actif ? View.VISIBLE : View.GONE);
         boutonConnexion.setEnabled(!actif);
         if (actif) texteErreur.setVisibility(View.GONE);
     }
 
+    // Affiche un message d'erreur sous le formulaire.
     private void afficherErreur(String message) {
         texteErreur.setText(message);
         texteErreur.setVisibility(View.VISIBLE);
     }
 
+    // Ouvre l'accueil et ferme l'écran de connexion.
     private void ouvrirAccueil() {
         startActivity(new Intent(this, AccueilActivity.class));
         finish();

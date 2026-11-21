@@ -5,29 +5,34 @@ import { STATUTS, LIBELLES_STATUT, COULEUR_STATUT, CENTRE_NABEUL, formaterScore,
 
 // Recentre la carte sur l'incident sélectionné dans la liste.
 function Recentrer({ incident }) {
+  // Carte Leaflet courante (hook de react-leaflet).
   const carte = useMap();
+  // Déplace la carte vers l'incident sélectionné.
   useEffect(() => {
     if (incident) carte.flyTo([incident.position.lat, incident.position.lng], 16);
   }, [incident, carte]);
   return null;
 }
 
+// Onglet « Incidents » : liste triée par priorité, filtres, pagination et carte.
 export default function Incidents({ onOuvrir }) {
-  const [filtreStatut, setFiltreStatut] = useState('');
-  const [filtreCategorie, setFiltreCategorie] = useState('');
-  const [page, setPage] = useState(1);
-  const [categories, setCategories] = useState([]);
-  const [resultat, setResultat] = useState(null);
-  const [erreur, setErreur] = useState('');
-  const [chargement, setChargement] = useState(true);
-  const [selectionId, setSelectionId] = useState(null);
+  const [filtreStatut, setFiltreStatut] = useState(''); // filtre de statut
+  const [filtreCategorie, setFiltreCategorie] = useState(''); // filtre de catégorie
+  const [page, setPage] = useState(1); // page courante
+  const [categories, setCategories] = useState([]); // catégories chargées depuis l'API
+  const [resultat, setResultat] = useState(null); // page de résultats, null pendant le chargement
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
+  const [chargement, setChargement] = useState(true); // vrai pendant le chargement de la liste
+  const [selectionId, setSelectionId] = useState(null); // incident sélectionné dans la liste
 
+  // Charge les catégories pour le filtre.
   useEffect(() => {
     listerCategories()
       .then((r) => setCategories(r.categories))
       .catch(() => {});
   }, []);
 
+  // Recharge la liste à chaque changement de filtre ou de page, en ignorant les réponses périmées.
   useEffect(() => {
     let annule = false;
     setChargement(true);
@@ -52,6 +57,7 @@ export default function Incidents({ onOuvrir }) {
   const selection = incidents.find((i) => i.id === selectionId) ?? null;
   const nbPages = resultat ? Math.max(1, Math.ceil(resultat.total / resultat.limite)) : 1;
 
+  // Applique un filtre et revient à la première page.
   const changerFiltre = (setter) => (e) => {
     setter(e.target.value);
     setPage(1);

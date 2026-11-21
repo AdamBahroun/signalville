@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import { listerCategories, modifierCategorie } from './api.js';
 
+// Une ligne du tableau : rayon de regroupement (RG2) et poids (RG4) modifiables.
 function LigneCategorie({ categorie, onEnregistre, onErreur }) {
-  const [rayon, setRayon] = useState(String(categorie.rayonMetres));
-  const [poids, setPoids] = useState(String(categorie.poids));
-  const [enCours, setEnCours] = useState(false);
+  const [rayon, setRayon] = useState(String(categorie.rayonMetres)); // rayon saisi (mètres)
+  const [poids, setPoids] = useState(String(categorie.poids)); // poids saisi
+  const [enCours, setEnCours] = useState(false); // vrai pendant l'appel à l'API
+  // Vrai tant que les valeurs saisies sont celles déjà enregistrées.
   const inchange = rayon === String(categorie.rayonMetres) && poids === String(categorie.poids);
 
+  // Envoie la modification de la catégorie à l'API.
   async function enregistrer() {
     setEnCours(true);
     onErreur('');
@@ -38,17 +41,20 @@ function LigneCategorie({ categorie, onEnregistre, onErreur }) {
   );
 }
 
+// Onglet « Paramètres » : réglage du rayon et du poids de chaque catégorie.
 export default function Parametres() {
-  const [categories, setCategories] = useState(null);
-  const [erreur, setErreur] = useState('');
-  const [message, setMessage] = useState('');
+  const [categories, setCategories] = useState(null); // catégories chargées depuis l'API
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
+  const [message, setMessage] = useState(''); // message de succès affiché
 
+  // Charge les catégories au premier affichage.
   useEffect(() => {
     listerCategories()
       .then((r) => setCategories(r.categories))
       .catch((err) => setErreur(err.message));
   }, []);
 
+  // Remplace dans la liste la catégorie qui vient d'être modifiée.
   const remplacer = (maj) => {
     setCategories((liste) => liste.map((c) => (c.nom === maj.nom ? maj : c)));
     setMessage(`Catégorie « ${maj.libelle} » enregistrée.`);

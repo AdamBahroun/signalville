@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
+// Petites fonctions d'affichage : coordonnées, dates, couleur de statut, pluriel.
 public final class FormatUtil {
     private FormatUtil() {}
 
@@ -28,6 +29,7 @@ public final class FormatUtil {
         return String.format(Locale.US, "%.6f", valeur);
     }
 
+    // Couleur du statut : orange nouveau, bleu pris en charge, vert résolu, rouge rejeté.
     public static int couleurStatut(String statut) {
         if ("pris_en_charge".equals(statut)) return Color.parseColor("#1565C0");
         if ("resolu".equals(statut)) return Color.parseColor("#2E7D32");
@@ -35,6 +37,7 @@ public final class FormatUtil {
         return Color.parseColor("#EF6C00"); // nouveau
     }
 
+    // Accorde un mot au singulier ou au pluriel selon le nombre.
     public static String pluriel(int nombre, String singulier, String pluriel) {
         return nombre + " " + (nombre > 1 ? pluriel : singulier);
     }

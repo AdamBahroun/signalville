@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { connecter, verifierAcces } from './api.js';
 
+// Écran de connexion de l'administrateur.
 export default function Login({ onConnecte }) {
-  const [email, setEmail] = useState('');
-  const [motDePasse, setMotDePasse] = useState('');
-  const [erreur, setErreur] = useState('');
-  const [enCours, setEnCours] = useState(false);
+  const [email, setEmail] = useState(''); // email saisi
+  const [motDePasse, setMotDePasse] = useState(''); // mot de passe saisi
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
+  const [enCours, setEnCours] = useState(false); // vrai pendant l'appel à l'API
 
+  // Envoie email et mot de passe, et refuse les comptes qui ne sont pas administrateurs.
   async function soumettre(e) {
     e.preventDefault();
     setErreur('');

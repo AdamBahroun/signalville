@@ -70,6 +70,7 @@ public class SignalementActivity extends ActiviteProtegee {
         }
     });
 
+    // Prépare le formulaire de signalement : catégorie, description, position et photo.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,6 +123,7 @@ public class SignalementActivity extends ActiviteProtegee {
         chargerCategories();
     }
 
+    // Conserve la position et la photo si l'écran est recréé (rotation, appareil photo).
     @Override
     protected void onSaveInstanceState(Bundle etat) {
         super.onSaveInstanceState(etat);
@@ -135,8 +137,10 @@ public class SignalementActivity extends ActiviteProtegee {
 
     // ------------------------------------------------------------------ Catégories
 
+    // Charge les catégories depuis l'API pour la liste déroulante.
     private void chargerCategories() {
         ApiClient.get(this).categories().enqueue(new Callback<CategoriesResponse>() {
+            // Catégories reçues : on remplit la liste déroulante.
             @Override
             public void onResponse(Call<CategoriesResponse> appel, Response<CategoriesResponse> reponse) {
                 if (isFinishing()) return;
@@ -149,6 +153,7 @@ public class SignalementActivity extends ActiviteProtegee {
                 }
             }
 
+            // Réseau indisponible : l'envoi reste impossible tant que les catégories manquent.
             @Override
             public void onFailure(Call<CategoriesResponse> appel, Throwable erreur) {
                 if (isFinishing()) return;
@@ -159,15 +164,18 @@ public class SignalementActivity extends ActiviteProtegee {
 
     // ------------------------------------------------------------------ Position
 
+    // Cherche la position du téléphone pour le signalement.
     private void trouverPosition() {
         textePosition.setText("Position : recherche en cours…");
         Localisation.demander(this, new Localisation.Ecouteur() {
+            // Position du téléphone trouvée : on la retient comme position du signalement.
             @Override
             public void surPosition(android.location.Location position) {
                 if (isFinishing()) return;
                 definirPosition(position.getLatitude(), position.getLongitude(), "GPS");
             }
 
+            // Position introuvable : message clair, le citoyen peut choisir le point sur la carte.
             @Override
             public void surErreur(String message) {
                 if (isFinishing()) return;
@@ -177,6 +185,7 @@ public class SignalementActivity extends ActiviteProtegee {
         });
     }
 
+    // Mémorise la position choisie et son origine (téléphone ou carte).
     private void definirPosition(double latitude, double longitude, String origine) {
         lat = latitude;
         lng = longitude;
@@ -184,6 +193,7 @@ public class SignalementActivity extends ActiviteProtegee {
         textePosition.setText("Position : " + FormatUtil.coordonnee(latitude) + ", " + FormatUtil.coordonnee(longitude) + " (" + origine + ")");
     }
 
+    // Met à jour le texte qui affiche la position choisie.
     private void majTextePosition() {
         if (lat == null || lng == null) textePosition.setText("Position : non définie");
         else textePosition.setText("Position : " + FormatUtil.coordonnee(lat) + ", " + FormatUtil.coordonnee(lng));
@@ -191,6 +201,7 @@ public class SignalementActivity extends ActiviteProtegee {
 
     // ------------------------------------------------------------------ Photo
 
+    // Lance l'appareil photo avec un fichier temporaire dans le cache.
     private void ouvrirAppareilPhoto() {
         try {
             File fichier = new File(PhotoUtil.dossier(this), "camera.jpg");
@@ -201,6 +212,7 @@ public class SignalementActivity extends ActiviteProtegee {
         }
     }
 
+    // Réduit et corrige l'orientation de la photo en arrière-plan avant l'envoi.
     private void preparerPhoto(final Uri source) {
         texteErreur.setVisibility(View.GONE);
         boutonEnvoyer.setEnabled(false);
@@ -224,6 +236,7 @@ public class SignalementActivity extends ActiviteProtegee {
         }).start();
     }
 
+    // Affiche l'aperçu de la photo préparée.
     private void afficherApercu() {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 4; // l'aperçu n'a pas besoin de 1600 pixels
@@ -233,6 +246,7 @@ public class SignalementActivity extends ActiviteProtegee {
         boutonRetirerPhoto.setVisibility(View.VISIBLE);
     }
 
+    // Retire la photo choisie et son aperçu.
     private void retirerPhoto() {
         photo = null;
         apercu.setImageDrawable(null);
@@ -242,6 +256,7 @@ public class SignalementActivity extends ActiviteProtegee {
 
     // ------------------------------------------------------------------ Envoi
 
+    // Contrôle les champs, avertit sur la vie privée si une photo est jointe, puis envoie.
     private void verifierPuisEnvoyer() {
         texteErreur.setVisibility(View.GONE);
         if (!categoriesChargees || !(spinnerCategorie.getSelectedItem() instanceof Categorie)) {
@@ -271,6 +286,7 @@ public class SignalementActivity extends ActiviteProtegee {
                 .show();
     }
 
+    // Envoie le signalement à l'API en multipart (la photo est facultative).
     private void envoyer(Categorie categorie, String description) {
         enCours(true);
         MediaType texte = MediaType.parse("text/plain; charset=utf-8");
@@ -286,6 +302,7 @@ public class SignalementActivity extends ActiviteProtegee {
                         RequestBody.create(FormatUtil.coordonnee(lng), texte),
                         partPhoto)
                 .enqueue(new Callback<SignalementResponse>() {
+                    // Signalement créé : confirmation ; sinon message de l'API (RG6, RG9).
                     @Override
                     public void onResponse(Call<SignalementResponse> appel, Response<SignalementResponse> reponse) {
                         if (isFinishing()) return;
@@ -299,15 +316,17 @@ public class SignalementActivity extends ActiviteProtegee {
                         }
                     }
 
+                    // Réseau indisponible pendant l'envoi.
                     @Override
                     public void onFailure(Call<SignalementResponse> appel, Throwable erreur) {
                         if (isFinishing()) return;
                         enCours(false);
-                        afficherErreur("Impossible de joindre le serveur. Vérifie la connexion et réessaie.");
+                        afficherErreur(ErreurUtil.reseau(erreur));
                     }
                 });
     }
 
+    // Indique si le signalement a créé un nouvel incident ou a rejoint un incident existant (RG2).
     private void confirmerEnvoi(boolean nouvelIncident) {
         String message = nouvelIncident
                 ? "Ton signalement a créé un nouvel incident. Tu peux suivre son état dans « Mes signalements »."
@@ -320,6 +339,7 @@ public class SignalementActivity extends ActiviteProtegee {
                 .show();
     }
 
+    // Supprime les photos temporaires du cache.
     private void supprimerPhotosTemporaires() {
         File[] fichiers = PhotoUtil.dossier(this).listFiles();
         if (fichiers == null) return;
@@ -327,12 +347,14 @@ public class SignalementActivity extends ActiviteProtegee {
             f.delete();
     }
 
+    // Affiche ou masque la progression et verrouille le bouton.
     private void enCours(boolean actif) {
         progression.setVisibility(actif ? View.VISIBLE : View.GONE);
         boutonEnvoyer.setEnabled(!actif);
         if (actif) texteErreur.setVisibility(View.GONE);
     }
 
+    // Affiche un message d'erreur sous le formulaire.
     private void afficherErreur(String message) {
         texteErreur.setText(message);
         texteErreur.setVisibility(View.VISIBLE);

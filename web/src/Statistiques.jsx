@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { statistiques } from './api.js';
 import { STATUTS, LIBELLES_STATUT, COULEUR_STATUT } from './format.js';
 
+// Barre horizontale proportionnelle à la valeur.
 function Barre({ valeur, maximum, couleur }) {
   const largeur = maximum > 0 ? Math.round((valeur / maximum) * 100) : 0;
   return (
@@ -11,10 +12,12 @@ function Barre({ valeur, maximum, couleur }) {
   );
 }
 
+// Onglet « Statistiques » : totaux, répartition et délai moyen de résolution.
 export default function Statistiques() {
-  const [stats, setStats] = useState(null);
-  const [erreur, setErreur] = useState('');
+  const [stats, setStats] = useState(null); // statistiques, null pendant le chargement
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
 
+  // Charge les statistiques au premier affichage.
   useEffect(() => {
     statistiques()
       .then(setStats)

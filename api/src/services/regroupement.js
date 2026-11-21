@@ -6,7 +6,10 @@ const Confirmation = require('../models/Confirmation');
 const User = require('../models/User');
 const ErreurMetier = require('./ErreurMetier');
 const { STATUTS_OUVERTS, LIBELLES, transitionAutorisee, motifObligatoire } = require('./statuts');
-const { centre } = require('./geo');
+const { centre, distanceMetres } = require('./geo');
+const { MS_PAR_JOUR } = require('./score');
+const config = require('../config');
+const { notifierChangementStatut } = require('./notifications');
 
 // Recalcule les compteurs, la position centrale et la date du premier signalement à partir des signalements non rejetés.
 // Les confirmations « moi aussi » comptent comme des utilisateurs distincts (RG4).
@@ -65,9 +68,10 @@ async function enregistrerSignalement({ utilisateurId, categorie, description, l
 }
 
 // F4 : confirmation « moi aussi ». RG5 : une seule confirmation par utilisateur et par incident (garantie par l'index unique de la base).
+// RG10 : le téléphone doit être près de l'incident, et le nombre de confirmations par jour est limité.
 // Une confirmation compte comme un utilisateur distinct dans le score (RG4). Elle n'ajoute pas de signalement.
-async function confirmerIncident({ incidentId, utilisateurId }) {
-  const incident = await Incident.findById(incidentId).select('statut');
+async function confirmerIncident({ incidentId, utilisateurId, lat, lng }) {
+  const incident = await Incident.findById(incidentId).select('statut positionCentrale');
   if (!incident) throw new ErreurMetier(404, 'Incident introuvable.');
   // RG3 : un incident résolu ou rejeté est clos.
   if (!STATUTS_OUVERTS.includes(incident.statut)) throw new ErreurMetier(409, "Cet incident n'est plus ouvert.");
@@ -75,6 +79,21 @@ async function confirmerIncident({ incidentId, utilisateurId }) {
   if (await Report.exists({ incident: incident._id, utilisateur: utilisateurId, rejete: false })) {
     throw new ErreurMetier(409, 'Tu as déjà signalé cet incident : ton signalement est déjà pris en compte.');
   }
+  // RG5 : refus clair avant les contrôles RG10 (l'index unique reste la garantie en cas de requêtes simultanées).
+  if (await Confirmation.exists({ utilisateur: utilisateurId, incident: incident._id })) throw new ErreurMetier(409, 'Tu as déjà confirmé cet incident.');
+
+  // RG10 : distance entre la position déclarée du téléphone et le centre de l'incident.
+  const { rayonMetres, limiteParJour } = config.confirmation;
+  const distance = Math.round(distanceMetres([lng, lat], incident.positionCentrale.coordinates));
+  if (distance > rayonMetres) {
+    throw new ErreurMetier(403, `Tu es trop loin de cet incident pour le confirmer (${distance} m, maximum ${rayonMetres} m). Rapproche-toi du lieu.`);
+  }
+  // RG10 : limite quotidienne sur 24 heures glissantes.
+  const depuis = new Date(Date.now() - MS_PAR_JOUR);
+  if ((await Confirmation.countDocuments({ utilisateur: utilisateurId, date: { $gte: depuis } })) >= limiteParJour) {
+    throw new ErreurMetier(429, `Limite de ${limiteParJour} confirmations par jour atteinte.`);
+  }
+
   try {
     await Confirmation.create({ utilisateur: utilisateurId, incident: incident._id });
   } catch (err) {
@@ -99,6 +118,7 @@ async function changerStatut({ incidentId, vers, motif = '', agentId, date = new
     { returnDocument: 'after' }
   );
   if (!maj) throw new ErreurMetier(409, "L'incident a été modifié entre-temps, recharge la page.");
+  notifierChangementStatut(maj); // S4.1 : envoi en arrière-plan, un échec ne bloque jamais le changement de statut
   return maj;
 }
 

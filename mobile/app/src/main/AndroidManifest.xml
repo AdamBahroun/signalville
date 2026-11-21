@@ -8,6 +8,8 @@
     <!-- Position du signalement (le citoyen peut aussi poser le point à la main sur la carte) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Notifications de changement de statut (Android 13 et plus), actives seulement si Firebase est configuré -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -50,6 +52,15 @@
         <activity
             android:name=".SuiviActivity"
             android:exported="false" />
+
+        <!-- Reçoit les messages Firebase (S4.1) ; inactif sans google-services.json -->
+        <service
+            android:name=".NotificationsService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <!-- Donne à l'appareil photo le droit d'écrire la photo dans le dossier cache/photos de l'application -->
         <provider

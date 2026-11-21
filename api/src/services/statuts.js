@@ -17,6 +17,7 @@ const TRANSITIONS = {
   rejete: [],
 };
 
+// RG7 : vrai si le passage de de vers vers est autorisé.
 const transitionAutorisee = (de, vers) => (TRANSITIONS[de] || []).includes(vers);
 
 // Le motif est obligatoire pour un rejet et pour une réouverture (RG7).

@@ -11,6 +11,7 @@ import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
+// Routes de l'API utilisées par l'application (Retrofit).
 public interface ApiService {
     @POST("auth/register")
     Call<InscriptionResponse> inscrire(@Body RegisterRequest corps);
@@ -34,11 +35,17 @@ public interface ApiService {
 
     // lat et lng en texte : l'API n'accepte que 12 décimales au plus, un double Java peut en produire davantage.
     @GET("incidents")
-    Call<IncidentsResponse> incidentsProches(@Query("lat") String lat, @Query("lng") String lng, @Query("rayon") int rayon);
+    // categorie : filtre facultatif (null = toutes les catégories, le paramètre est alors omis).
+    Call<IncidentsResponse> incidentsProches(@Query("lat") String lat, @Query("lng") String lng, @Query("rayon") int rayon, @Query("categorie") String categorie);
 
+    // RG10 : « moi aussi » envoie la position du téléphone (l'API refuse au-delà de la distance autorisée).
     @POST("incidents/{id}/confirm")
-    Call<ConfirmationResponse> confirmer(@Path("id") String idIncident);
+    Call<ConfirmationResponse> confirmer(@Path("id") String idIncident, @Body Position position);
 
     @GET("me/reports")
     Call<MesSignalementsResponse> mesSignalements();
+
+    // S4.1 : enregistre le jeton Firebase de l'appareil pour les notifications de changement de statut.
+    @POST("me/device-token")
+    Call<Void> enregistrerAppareil(@Body JetonAppareilRequest corps);
 }

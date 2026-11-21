@@ -16,12 +16,14 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// Écran d'inscription d'un nouveau citoyen.
 public class InscriptionActivity extends AppCompatActivity {
     private EditText champNom, champEmail, champMotDePasse, champConfirmation;
     private Button boutonInscription;
     private ProgressBar progression;
     private TextView texteErreur;
 
+    // Prépare le formulaire d'inscription.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,6 +38,7 @@ public class InscriptionActivity extends AppCompatActivity {
         boutonInscription.setOnClickListener(v -> inscrire());
     }
 
+    // Vérifie les champs (dont la confirmation du mot de passe) puis envoie l'inscription à l'API.
     private void inscrire() {
         String nom = champNom.getText().toString().trim();
         String email = champEmail.getText().toString().trim();
@@ -61,6 +64,7 @@ public class InscriptionActivity extends AppCompatActivity {
 
         enCours(true);
         ApiClient.get(this).inscrire(new RegisterRequest(nom, email, motDePasse)).enqueue(new Callback<InscriptionResponse>() {
+            // Inscription acceptée : retour à la connexion ; sinon message de l'API.
             @Override
             public void onResponse(Call<InscriptionResponse> appel, Response<InscriptionResponse> reponse) {
                 if (isFinishing()) return;
@@ -73,21 +77,24 @@ public class InscriptionActivity extends AppCompatActivity {
                 }
             }
 
+            // Réseau indisponible pendant l'inscription.
             @Override
             public void onFailure(Call<InscriptionResponse> appel, Throwable erreur) {
                 if (isFinishing()) return;
                 enCours(false);
-                afficherErreur("Impossible de joindre le serveur. Vérifie la connexion et l'adresse de l'API.");
+                afficherErreur(ErreurUtil.reseau(erreur));
             }
         });
     }
 
+    // Affiche ou masque la progression et verrouille le bouton.
     private void enCours(boolean actif) {
         progression.setVisibility(actif ? View.VISIBLE : View.GONE);
         boutonInscription.setEnabled(!actif);
         if (actif) texteErreur.setVisibility(View.GONE);
     }
 
+    // Affiche un message d'erreur sous le formulaire.
     private void afficherErreur(String message) {
         texteErreur.setText(message);
         texteErreur.setVisibility(View.VISIBLE);

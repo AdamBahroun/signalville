@@ -30,6 +30,7 @@ public class MesSignalementsActivity extends ActiviteProtegee {
     private final List<MonSignalement> signalements = new ArrayList<>();
     private Adaptateur adaptateur;
 
+    // Prépare la liste « Mes signalements » (S3.6) et lance son chargement.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,10 +60,12 @@ public class MesSignalementsActivity extends ActiviteProtegee {
         if (!isFinishing()) charger();
     }
 
+    // Charge mes signalements avec le statut de leur incident (GET /me/reports).
     private void charger() {
         progression.setVisibility(View.VISIBLE);
         texteErreur.setVisibility(View.GONE);
         ApiClient.get(this).mesSignalements().enqueue(new Callback<MesSignalementsResponse>() {
+            // Liste reçue : on l'affiche, ou on affiche le message d'erreur de l'API.
             @Override
             public void onResponse(Call<MesSignalementsResponse> appel, Response<MesSignalementsResponse> reponse) {
                 if (isFinishing()) return;
@@ -78,15 +81,17 @@ public class MesSignalementsActivity extends ActiviteProtegee {
                 }
             }
 
+            // Réseau indisponible : message clair.
             @Override
             public void onFailure(Call<MesSignalementsResponse> appel, Throwable erreur) {
                 if (isFinishing()) return;
                 progression.setVisibility(View.GONE);
-                afficherErreur("Impossible de joindre le serveur. Vérifie la connexion.");
+                afficherErreur(ErreurUtil.reseau(erreur));
             }
         });
     }
 
+    // Affiche un message d'erreur à la place de la liste.
     private void afficherErreur(String message) {
         texteErreur.setText(message);
         texteErreur.setVisibility(View.VISIBLE);
@@ -107,12 +112,14 @@ public class MesSignalementsActivity extends ActiviteProtegee {
             this.surClic = surClic;
         }
 
+        // Crée la vue d'une ligne de la liste.
         @NonNull
         @Override
         public Ligne onCreateViewHolder(@NonNull ViewGroup parent, int type) {
             return new Ligne(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_signalement, parent, false));
         }
 
+        // Remplit une ligne : catégorie, date, statut coloré ; un toucher ouvre le suivi.
         @Override
         public void onBindViewHolder(@NonNull Ligne ligne, int position) {
             final MonSignalement s = donnees.get(position);
@@ -128,6 +135,7 @@ public class MesSignalementsActivity extends ActiviteProtegee {
             ligne.itemView.setOnClickListener(v -> surClic.ouvrir(s));
         }
 
+        // Nombre de signalements affichés.
         @Override
         public int getItemCount() {
             return donnees.size();

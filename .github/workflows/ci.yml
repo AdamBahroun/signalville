@@ -1,0 +1,59 @@
+# Intégration continue (S4.3) : tests de l'API avec une base MongoDB, puis tests et build du site web.
+name: CI
+
+# Se lance à chaque envoi sur la branche principale et sur chaque demande de fusion
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  # Tests de l'API (Node 22) avec un MongoDB de service
+  api:
+    name: API (tests)
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:8
+        ports:
+          - 27017:27017
+        # Attend que MongoDB réponde avant de lancer les tests
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      MONGODB_URI_TEST: mongodb://127.0.0.1:27017/tuniins_test
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      # Installation exacte des dépendances du fichier package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  # Tests et build du site web (Node 22)
+  web:
+    name: Site web (tests et build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      # Les tests du site web existent : npm test les lance
+      - run: npm test --if-present
+      - run: npm run build

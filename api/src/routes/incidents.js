@@ -4,7 +4,7 @@ const Category = require('../models/Category');
 const Report = require('../models/Report');
 const Confirmation = require('../models/Confirmation');
 const { authentifier, exigerRole } = require('../middleware/auth');
-const { validerProximite, estIdObjet } = require('../validation');
+const { validerProximite, validerConfirmation, estIdObjet } = require('../validation');
 const ErreurMetier = require('../services/ErreurMetier');
 const { STATUTS_OUVERTS, LIBELLES } = require('../services/statuts');
 const { distanceMetres } = require('../services/geo');
@@ -56,10 +56,12 @@ router.get('/', authentifier, exigerRole('citoyen'), async (req, res) => {
   });
 });
 
-// POST /incidents/:id/confirm : « moi aussi » (F4, RG5). 201 si la confirmation est enregistrée.
+// POST /incidents/:id/confirm : « moi aussi » (F4, RG5, RG10). Corps { lat, lng } obligatoire. 201 si la confirmation est enregistrée.
 router.post('/:id/confirm', authentifier, exigerRole('citoyen'), async (req, res) => {
   if (!estIdObjet(req.params.id)) throw new ErreurMetier(400, 'Identifiant invalide.');
-  const incident = await confirmerIncident({ incidentId: req.params.id, utilisateurId: req.utilisateur._id });
+  const { details, valeurs } = validerConfirmation(req.body);
+  if (details) return res.status(400).json({ erreur: details.position, details });
+  const incident = await confirmerIncident({ incidentId: req.params.id, utilisateurId: req.utilisateur._id, lat: valeurs.lat, lng: valeurs.lng });
   res.status(201).json({ incidentId: String(incident._id), nbSignalements: incident.nbSignalements, nbPersonnes: incident.nbUtilisateurs, dejaConfirme: true });
 });
 

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const { appliquerToJSON } = require('./outils');
 const { STATUTS } = require('../services/statuts');
 
+// Point GeoJSON [longitude, latitude], requis pour l'index géospatial 2dsphere.
 const pointSchema = new mongoose.Schema(
   {
     type: { type: String, enum: ['Point'], default: 'Point', required: true },
@@ -10,6 +11,7 @@ const pointSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Une ligne de l'historique : statut, agent, date et motif (RG8).
 const changementSchema = new mongoose.Schema(
   {
     statut: { type: String, enum: STATUTS, required: true },
@@ -20,6 +22,7 @@ const changementSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Incident : regroupe les signalements proches de même catégorie (RG1, RG2).
 const incidentSchema = new mongoose.Schema({
   categorie: { type: String, required: true, index: true },
   positionCentrale: { type: pointSchema, required: true },
@@ -34,6 +37,7 @@ const incidentSchema = new mongoose.Schema({
 
 // Index géospatial : indispensable pour la requête $near du regroupement (RG2).
 incidentSchema.index({ positionCentrale: '2dsphere' });
+// Accélère la recherche d'incidents ouverts d'une catégorie (RG2, RG3).
 incidentSchema.index({ statut: 1, categorie: 1 });
 appliquerToJSON(incidentSchema);
 

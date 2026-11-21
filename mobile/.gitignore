@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Configuration Firebase du projet (propre à chaque développeur, jamais dans le dépôt)
+app/google-services.json

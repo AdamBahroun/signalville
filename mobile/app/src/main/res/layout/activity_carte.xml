@@ -27,6 +27,39 @@
             android:text="Actualiser ici" />
     </LinearLayout>
 
+    <!-- Filtre par catégorie (S4.5) -->
+    <Spinner
+        android:id="@+id/filtreCategorie"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp" />
+
+    <!-- Légende des repères : couleur selon le statut (mêmes couleurs que FormatUtil.couleurStatut) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● Nouveau"
+            android:textColor="#EF6C00"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="● Pris en charge"
+            android:textColor="#1565C0"
+            android:textSize="13sp" />
+    </LinearLayout>
+
     <org.osmdroid.views.MapView
         android:id="@+id/carte"
         android:layout_width="match_parent"

@@ -2,6 +2,7 @@
 const { calculerScore, joursDepuis } = require('./score');
 const { LIBELLES } = require('./statuts');
 
+// Formate un incident pour l'administrateur : position, libellés, score recalculé (RG4).
 function presenterIncident(incident, categorie, maintenant = new Date()) {
   const poids = categorie ? categorie.poids : 1;
   const [lng, lat] = incident.positionCentrale.coordinates;

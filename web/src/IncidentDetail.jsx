@@ -3,11 +3,13 @@ import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
 import { detailIncident, changerStatut, fusionnerIncident, rejeterSignalement, listerIncidents } from './api.js';
 import { COULEUR_STATUT, formaterScore, formaterDate, formaterJours, lienSur } from './format.js';
 
+// Formulaire de changement de statut : transitions autorisées et motif (RG7, RG8).
 function FormulaireStatut({ incident, transitions, onFait, onErreur }) {
-  const [vers, setVers] = useState(transitions[0]?.statut ?? '');
-  const [motif, setMotif] = useState('');
-  const [enCours, setEnCours] = useState(false);
+  const [vers, setVers] = useState(transitions[0]?.statut ?? ''); // statut cible choisi
+  const [motif, setMotif] = useState(''); // motif saisi (RG7)
+  const [enCours, setEnCours] = useState(false); // vrai pendant l'appel à l'API
 
+  // Réinitialise le choix et le motif quand le statut de l'incident change.
   useEffect(() => {
     setVers(transitions[0]?.statut ?? '');
     setMotif('');
@@ -18,6 +20,7 @@ function FormulaireStatut({ incident, transitions, onFait, onErreur }) {
   }
   const choix = transitions.find((t) => t.statut === vers);
 
+  // Envoie le changement de statut à l'API puis recharge le détail.
   async function valider(e) {
     e.preventDefault();
     setEnCours(true);
@@ -56,12 +59,14 @@ function FormulaireStatut({ incident, transitions, onFait, onErreur }) {
   );
 }
 
+// Un signalement de l'incident, avec le formulaire de rejet (modération F14).
 function LigneSignalement({ s, onFait, onErreur }) {
-  const [ouvert, setOuvert] = useState(false);
-  const [motif, setMotif] = useState('');
-  const [bloquer, setBloquer] = useState(false);
-  const [enCours, setEnCours] = useState(false);
+  const [ouvert, setOuvert] = useState(false); // formulaire déplié ou non
+  const [motif, setMotif] = useState(''); // motif saisi (RG7)
+  const [bloquer, setBloquer] = useState(false); // case « bloquer l'auteur »
+  const [enCours, setEnCours] = useState(false); // vrai pendant l'appel à l'API
 
+  // Rejette le signalement avec son motif, et bloque l'auteur si la case est cochée.
   async function rejeter(e) {
     e.preventDefault();
     setEnCours(true);
@@ -120,11 +125,13 @@ function LigneSignalement({ s, onFait, onErreur }) {
   );
 }
 
+// Fusion de cet incident dans un doublon proche de même catégorie (F16).
 function Fusion({ incident, onFusionne, onErreur }) {
-  const [ouvert, setOuvert] = useState(false);
-  const [candidats, setCandidats] = useState([]);
-  const [cible, setCible] = useState('');
+  const [ouvert, setOuvert] = useState(false); // formulaire déplié ou non
+  const [candidats, setCandidats] = useState([]); // incidents candidats à la fusion
+  const [cible, setCible] = useState(''); // incident cible de la fusion
 
+  // À l'ouverture du formulaire, charge les incidents candidats à la fusion.
   useEffect(() => {
     if (!ouvert) return;
     listerIncidents({ statut: 'ouverts', categorie: incident.categorie, limite: 200 })
@@ -132,6 +139,7 @@ function Fusion({ incident, onFusionne, onErreur }) {
       .catch((err) => onErreur(err.message));
   }, [ouvert, incident.id, incident.categorie]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Fusionne l'incident dans la cible choisie puis ouvre l'incident résultant.
   async function fusionner() {
     if (!cible) return;
     if (!window.confirm('Fusionner cet incident dans l\'incident choisi ? Cette action est définitive.')) return;
@@ -174,11 +182,13 @@ function Fusion({ incident, onFusionne, onErreur }) {
   );
 }
 
+// Page détail d'un incident : signalements, carte, historique et actions de l'administrateur.
 export default function IncidentDetail({ id, onRetour, onOuvrir }) {
-  const [donnees, setDonnees] = useState(null);
-  const [erreur, setErreur] = useState('');
-  const [message, setMessage] = useState('');
+  const [donnees, setDonnees] = useState(null); // détail chargé depuis l'API
+  const [erreur, setErreur] = useState(''); // message d'erreur affiché
+  const [message, setMessage] = useState(''); // message de succès affiché
 
+  // Charge le détail de l'incident, ou affiche le message d'erreur.
   const charger = useCallback(async () => {
     try {
       setDonnees(await detailIncident(id));
@@ -188,12 +198,14 @@ export default function IncidentDetail({ id, onRetour, onOuvrir }) {
     }
   }, [id]);
 
+  // Recharge le détail à chaque changement d'incident.
   useEffect(() => {
     setDonnees(null);
     setMessage('');
     charger();
   }, [charger]);
 
+  // Affiche un message de succès puis recharge le détail.
   const apresAction = async (texte) => {
     setMessage(texte);
     await charger();
