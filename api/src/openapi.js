@@ -293,6 +293,18 @@ module.exports = {
         responses: reponses({ 200: { description: 'Incident mis à jour' } }, 400, 401, 403, 404, 409),
       },
     },
+    '/admin/incidents/{id}/similaires': {
+      get: {
+        tags: ['Administration'],
+        summary: 'Incidents similaires, candidats à la fusion',
+        description:
+          'Incidents ouverts de même catégorie situés à moins de (rayon de la catégorie x SIMILARITE_FACTEUR_RAYON, 3 par défaut), du plus proche au plus éloigné, 5 au maximum. ' +
+          'Liste vide si l\'incident n\'est plus ouvert. Sert à proposer la fusion de doublons que le regroupement automatique (RG2) n\'a pas rattachés.',
+        security: secu,
+        parameters: [idParam],
+        responses: reponses({ 200: { description: 'Liste des incidents similaires avec leur distance en mètres' } }, 400, 401, 403, 404),
+      },
+    },
     '/admin/incidents/{id}/fusion': {
       post: {
         tags: ['Administration'],

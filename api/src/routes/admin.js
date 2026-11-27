@@ -9,7 +9,7 @@ const ErreurMetier = require('../services/ErreurMetier');
 const { STATUTS, STATUTS_OUVERTS, LIBELLES, TRANSITIONS, motifObligatoire } = require('../services/statuts');
 const { presenterIncident } = require('../services/presentation');
 const { MS_PAR_JOUR } = require('../services/score');
-const { changerStatut, rejeterSignalement, fusionnerIncidents } = require('../services/regroupement');
+const { changerStatut, rejeterSignalement, fusionnerIncidents, chercherSimilaires } = require('../services/regroupement');
 const {
   estIdObjet,
   validerFiltresIncidents,
@@ -112,6 +112,15 @@ router.patch('/incidents/:id/status', async (req, res) => {
   const incident = await changerStatut({ incidentId: req.params.id, vers: valeurs.statut, motif: valeurs.motif, agentId: req.utilisateur._id });
   const categorie = await Category.findOne({ nom: incident.categorie }).lean();
   res.json({ incident: presenterIncident(incident.toObject(), categorie) });
+});
+
+// GET /admin/incidents/:id/similaires : incidents ouverts voisins de même catégorie, candidats à la fusion (F16).
+router.get('/incidents/:id/similaires', async (req, res) => {
+  verifierId(req.params.id);
+  const [resultats, categories] = await Promise.all([chercherSimilaires(req.params.id), Category.find().lean()]);
+  const parNom = new Map(categories.map((c) => [c.nom, c]));
+  const maintenant = new Date();
+  res.json({ similaires: resultats.map((r) => ({ ...presenterIncident(r.incident, parNom.get(r.incident.categorie), maintenant), distanceMetres: r.distanceMetres })) });
 });
 
 // POST /admin/incidents/:id/fusion : fusionne cet incident (source) dans un autre (cible) (F16).
