@@ -81,3 +81,24 @@ input.court { width: 6rem; }
   .detail-grille { grid-template-columns: 1fr; }
   .zone { overflow: visible; }
 }
+
+/* Encart des doublons probables (suggestions de fusion) */
+.doublons {
+  background: #fff8e1;
+  border: 1px solid #f0c36d;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.doublons ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+.doublons li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+}
