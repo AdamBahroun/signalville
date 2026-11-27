@@ -179,4 +179,24 @@ async function fusionnerIncidents({ sourceId, cibleId, agentId }) {
   return recalculerIncident(cible._id);
 }
 
-module.exports = { recalculerIncident, enregistrerSignalement, confirmerIncident, changerStatut, rejeterSignalement, fusionnerIncidents };
+// F16 : suggestions de fusion. Incidents ouverts de même catégorie proches de celui-ci, du plus proche au plus éloigné.
+// Utile car RG2 ne regroupe qu'à l'intérieur du rayon strict de la catégorie : un doublon à 40 m (rayon 30 m) crée un incident distinct.
+async function chercherSimilaires(incidentId) {
+  const incident = await Incident.findById(incidentId).select('categorie statut positionCentrale').lean();
+  if (!incident) throw new ErreurMetier(404, 'Incident introuvable.');
+  if (!STATUTS_OUVERTS.includes(incident.statut)) return []; // RG3 : seuls des incidents ouverts se fusionnent
+  const categorie = await Category.findOne({ nom: incident.categorie }).lean();
+  const rayon = (categorie ? categorie.rayonMetres : 50) * config.similarite.facteurRayon;
+  const candidats = await Incident.find({
+    _id: { $ne: incident._id },
+    categorie: incident.categorie,
+    statut: { $in: STATUTS_OUVERTS },
+    positionCentrale: { $near: { $geometry: incident.positionCentrale, $maxDistance: rayon } }, // trié du plus proche au plus éloigné
+  })
+    .select('-historique')
+    .limit(config.similarite.maxResultats)
+    .lean();
+  return candidats.map((c) => ({ incident: c, distanceMetres: Math.round(distanceMetres(incident.positionCentrale.coordinates, c.positionCentrale.coordinates)) }));
+}
+
+module.exports = { chercherSimilaires, recalculerIncident, enregistrerSignalement, confirmerIncident, changerStatut, rejeterSignalement, fusionnerIncidents };
