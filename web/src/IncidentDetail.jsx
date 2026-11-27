@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, CircleMarker } from 'react-leaflet';
-import { detailIncident, changerStatut, fusionnerIncident, rejeterSignalement, listerIncidents } from './api.js';
+import { detailIncident, changerStatut, fusionnerIncident, rejeterSignalement, listerIncidents, incidentsSimilaires } from './api.js';
 import { COULEUR_STATUT, formaterScore, formaterDate, formaterJours, lienSur } from './format.js';
 
 // Formulaire de changement de statut : transitions autorisées et motif (RG7, RG8).
@@ -126,6 +126,55 @@ function LigneSignalement({ s, onFait, onErreur }) {
 }
 
 // Fusion de cet incident dans un doublon proche de même catégorie (F16).
+// Doublons probables : incidents ouverts voisins de même catégorie, avec un bouton pour les fusionner (F16).
+function Similaires({ incident, onFusionne, onErreur }) {
+  const [liste, setListe] = useState([]); // incidents similaires proposés par l'API
+
+  // Recharge les suggestions à chaque changement d'incident ou de statut ; une erreur réseau masque simplement l'encart.
+  useEffect(() => {
+    let annule = false;
+    incidentsSimilaires(incident.id)
+      .then((r) => !annule && setListe(r.similaires))
+      .catch(() => !annule && setListe([]));
+    return () => {
+      annule = true;
+    };
+  }, [incident.id, incident.statut]);
+
+  // Fusionne l'incident courant dans le doublon choisi (celui-ci est conservé) puis ouvre l'incident conservé.
+  async function fusionner(cible) {
+    if (!window.confirm(`Fusionner cet incident dans l'incident voisin (${cible.distanceMetres} m) ? Cet incident disparaît et ses signalements sont rattachés à l'autre. Action définitive.`)) return;
+    onErreur('');
+    try {
+      await fusionnerIncident(incident.id, cible.id);
+      onFusionne(cible.id);
+    } catch (err) {
+      onErreur(err.message);
+    }
+  }
+
+  if (liste.length === 0) return null;
+  return (
+    <div className="doublons">
+      <strong>
+        {liste.length} doublon{liste.length > 1 ? 's' : ''} probable{liste.length > 1 ? 's' : ''} à proximité
+      </strong>
+      <ul>
+        {liste.map((s) => (
+          <li key={s.id}>
+            <span>
+              À {s.distanceMetres} m : {s.libelleStatut}, {s.nbSignalements} signalement(s), score {formaterScore(s.score)}, {formaterJours(s.ageJours)}
+            </span>
+            <button className="secondaire" onClick={() => fusionner(s)}>
+              Fusionner dans celui-ci
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function Fusion({ incident, onFusionne, onErreur }) {
   const [ouvert, setOuvert] = useState(false); // formulaire déplié ou non
   const [candidats, setCandidats] = useState([]); // incidents candidats à la fusion
@@ -285,6 +334,7 @@ export default function IncidentDetail({ id, onRetour, onOuvrir }) {
           {ouvert && (
             <>
               <h3>Doublon</h3>
+              <Similaires incident={incident} onFusionne={onOuvrir} onErreur={setErreur} />
               <Fusion incident={incident} onFusionne={onOuvrir} onErreur={setErreur} />
             </>
           )}

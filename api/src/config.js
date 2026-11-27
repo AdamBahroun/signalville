@@ -27,6 +27,11 @@ const config = {
     rayonMetres: Number(process.env.CONFIRMATION_RAYON_M) || 1000, // distance maximale téléphone-incident
     limiteParJour: Number(process.env.LIMITE_CONFIRMATIONS_PAR_JOUR) || 20, // fenêtre glissante de 24 heures
   },
+  // Détection de doublons probables : un incident est « similaire » s'il est ouvert, de même catégorie, à moins de (rayon de la catégorie x facteur).
+  similarite: {
+    facteurRayon: Number(process.env.SIMILARITE_FACTEUR_RAYON) || 3, // 3 x 30 m = 90 m pour un nid-de-poule
+    maxResultats: 5, // nombre maximal de suggestions renvoyées
+  },
   // S4.1 : chemin du fichier JSON du compte de service Firebase. Vide : notifications désactivées (jamais lu en test).
   firebaseCheminCompte: enTest ? '' : process.env.FIREBASE_SERVICE_ACCOUNT_PATH || '',
 

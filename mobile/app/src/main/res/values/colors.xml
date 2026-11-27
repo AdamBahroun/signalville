@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette Violet Indigo Material Design 3 -->
+    <color name="md_theme_light_primary">#5B3FD0</color>
+    <color name="md_theme_light_onPrimary">#FFFFFF</color>
+    <color name="md_theme_light_primaryContainer">#E8DDFF</color>
+    <color name="md_theme_light_onPrimaryContainer">#1D0061</color>
+
+    <color name="md_theme_light_secondary">#605B71</color>
+    <color name="md_theme_light_onSecondary">#FFFFFF</color>
+    <color name="md_theme_light_secondaryContainer">#E6E0F9</color>
+    <color name="md_theme_light_onSecondaryContainer">#1C182B</color>
+
+    <color name="md_theme_light_surface">#FBF8FF</color>
+    <color name="md_theme_light_onSurface">#1C1B20</color>
+    <color name="md_theme_light_surfaceVariant">#E6E0EC</color>
+    <color name="md_theme_light_onSurfaceVariant">#48454E</color>
+    <color name="md_theme_light_outline">#79747E</color>
+
+    <!-- Couleurs de statut fixes (gérées par le code Java) -->
+    <color name="statut_nouveau">#EF6C00</color>
+    <color name="statut_pris_en_charge">#1565C0</color>
+    <color name="statut_resolu">#2E7D32</color>
+    <color name="statut_rejete">#C62828</color>
+</resources>
