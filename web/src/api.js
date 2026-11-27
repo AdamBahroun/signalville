@@ -76,6 +76,7 @@ export async function verifierAcces(jeton) {
 export const listerIncidents = (filtres = {}) => requete('GET', `/admin/incidents${parametres(filtres)}`);
 export const detailIncident = (id) => requete('GET', `/admin/incidents/${id}`);
 export const changerStatut = (id, statut, motif) => requete('PATCH', `/admin/incidents/${id}/status`, { statut, motif });
+export const incidentsSimilaires = (id) => requete('GET', `/admin/incidents/${id}/similaires`);
 export const fusionnerIncident = (id, cibleId) => requete('POST', `/admin/incidents/${id}/fusion`, { cibleId });
 export const rejeterSignalement = (id, motif, bloquerAuteur) => requete('POST', `/admin/signalements/${id}/rejet`, { motif, bloquerAuteur });
 export const carteChaleur = () => requete('GET', '/admin/heatmap');
