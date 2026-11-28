@@ -16,11 +16,11 @@ ok()    { echo "[OK]    $1"; }
 echec() { echo "[ECHEC] $1"; erreurs=$((erreurs + 1)); }
 
 # 1. Fichiers requis
-for f in api/package.json api/package-lock.json api/.env.example; do
+for f in api/package.json api/package-lock.json api/Dockerfile api/.env.example .env.example compose.yaml; do
   if [ -f "$f" ]; then ok "fichier présent : $f"; else echec "fichier manquant : $f"; fi
 done
 
-# 2. Aucun fichier .env suivi par Git (le .env.example est autorisé)
+# 2. Aucun fichier .env suivi par Git (les .env.example sont autorisés)
 if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echec "ce dossier n'est pas un dépôt Git"
 else
@@ -28,12 +28,18 @@ else
   if [ -z "$suivis" ]; then ok "aucun fichier .env suivi par Git"; else echec "fichier(s) .env suivi(s) par Git : $suivis"; fi
 fi
 
-# 3. Le .env.example ne contient que des noms de variables, aucune valeur
-if grep -qE '^[^#]*=.+' api/.env.example 2>/dev/null; then
-  echec "api/.env.example contient une valeur (seuls les noms sont autorisés)"
-else
-  ok "api/.env.example ne contient aucune valeur"
-fi
+# 3. Les .env.example ne contiennent que des noms de variables, aucune valeur.
+# tr -d '\r' : un dépôt extrait sous Windows peut avoir des fins de ligne CRLF,
+# et le retour chariot serait pris pour une valeur.
+for f in api/.env.example .env.example; do
+  if [ -f "$f" ]; then
+    if tr -d '\r' < "$f" | grep -qE '^[^#]*=.+'; then
+      echec "$f contient une valeur (seuls les noms sont autorisés)"
+    else
+      ok "$f ne contient aucune valeur"
+    fi
+  fi
+done
 
 # 4. Contrôle de santé de l'API (seulement si une URL est donnée)
 if [ $# -ge 1 ]; then
