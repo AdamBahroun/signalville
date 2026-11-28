@@ -1,0 +1,34 @@
+name: signalville
+
+services:
+  mongo:
+    image: mongo:8
+    volumes:
+      # Volume nommé : les données survivent à "docker compose down"
+      - mongo-data:/data/db
+    healthcheck:
+      # Même contrôle que dans ci.yml : MongoDB répond à un ping
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    # Pas de "ports:" volontairement : MongoDB n'est joignable que par les services de ce réseau Compose
+
+  api:
+    build: ./api
+    # Tag local explicite : sans cette ligne, Compose nommerait l'image "latest"
+    image: signalville-api:dev
+    environment:
+      # Le secret vient du fichier .env (ignoré par Git), jamais écrit ici
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant, copier .env.example vers .env et le remplir}
+      # Connexion par nom de service : "mongo" est résolu par le DNS interne de Compose
+      MONGODB_URI: mongodb://mongo:27017/tuniins
+    ports:
+      - "3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
